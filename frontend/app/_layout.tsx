@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
-import { View, StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../src/store/appStore';
 import { getTheme } from '../src/theme/colors';
@@ -64,9 +64,7 @@ export default function TabLayout() {
         options={{
           title: 'Urgence',
           tabBarIcon: ({ color, size }) => (
-            <View>
-              <Ionicons name="warning-outline" size={24} color={color} />
-            </View>
+            <Ionicons name="warning-outline" size={24} color={color} />
           ),
         }}
       />
