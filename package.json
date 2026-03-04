@@ -1,0 +1,20 @@
+{
+  "name": "guardian-news",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Guardian News - Cyber Awareness Platform",
+  "scripts": {
+    "mobile": "pnpm --filter @guardian/mobile",
+    "web": "pnpm --filter @guardian/web",
+    "backend": "cd backend && python server.py",
+    "dev:mobile": "pnpm --filter @guardian/mobile start",
+    "dev:web": "pnpm --filter @guardian/web dev",
+    "build:web": "pnpm --filter @guardian/web build",
+    "build:types": "pnpm --filter @guardian/shared-types build",
+    "install:all": "pnpm install",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

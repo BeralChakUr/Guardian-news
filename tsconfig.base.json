@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noEmit": false,
+    "paths": {
+      "@guardian/shared-types": ["./packages/shared-types/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "**/node_modules", "dist", "**/dist"]
+}
