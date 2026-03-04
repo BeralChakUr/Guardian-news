@@ -1,11 +1,13 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Shield, Newspaper, AlertTriangle, Settings, Activity, Menu, X, ChevronRight } from 'lucide-react';
+import { Shield, Newspaper, AlertTriangle, Settings, Activity, Menu, X, ChevronRight, Swords, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTension } from '../services/newsService';
 
 const navItems = [
   { to: '/', icon: Newspaper, label: 'Actus', description: 'Fil d\'actualités' },
+  { to: '/attaques', icon: Swords, label: 'Attaques', description: 'Types de menaces' },
+  { to: '/outils', icon: Wrench, label: 'Outils', description: 'Boîte à outils' },
   { to: '/urgence', icon: AlertTriangle, label: 'Urgence', description: 'Procédures d\'urgence' },
   { to: '/parametres', icon: Settings, label: 'Paramètres', description: 'Configuration' },
 ];

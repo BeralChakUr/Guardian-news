@@ -1,15 +1,31 @@
 # Guardian News V2 - Plateforme de Veille Cybersécurité
 
 ## Vue d'ensemble
-Guardian News est une application mobile-first de veille cybersécurité avec **ingestion RSS automatique** et données en temps réel provenant de **10 sources fiables**.
+Guardian News est une **plateforme de veille cybersécurité complète** avec :
+- **Application Web** responsive (Desktop + Mobile)
+- **Ingestion RSS automatique** de données en temps réel
+- **10+ sources fiables** (CERT-FR, CISA, BleepingComputer, etc.)
 
-## Architecture V2
+## Architecture V2 - PNPM Monorepo
+
+### Structure
+```
+/app
+├── apps/
+│   ├── mobile/         # Expo React Native app
+│   └── web/            # React + Vite + Tailwind
+├── backend/            # FastAPI + MongoDB
+├── packages/
+│   └── shared-types/   # TypeScript types partagés
+├── pnpm-workspace.yaml
+└── package.json
+```
 
 ### Stack
-- **Frontend**: Expo SDK 55 / React Native / Expo Router
+- **Web Frontend**: React 18 + Vite + Tailwind CSS + TanStack Query + Zustand
+- **Mobile Frontend**: Expo SDK 55 / React Native / Expo Router
 - **Backend**: FastAPI avec ingestion RSS automatique
 - **Database**: MongoDB
-- **State**: Zustand + AsyncStorage (cache offline 6h TTL)
 
 ### Sources RSS (avec scores de confiance)
 | Source | Score | Statut |
@@ -22,6 +38,19 @@ Guardian News est une application mobile-first de veille cybersécurité avec **
 | Krebs on Security | 8 | ✅ |
 | Malwarebytes Labs | 8 | ✅ |
 | Microsoft Security | 9 | ✅ |
+
+## Application Web
+
+### Pages
+1. **Actus** - Fil d'actualités avec filtres et pagination
+2. **Attaques** - 8 types d'attaques détaillées (Phishing, Ransomware, etc.)
+3. **Outils** - 15 outils de sécurité recommandés
+4. **Urgence** - Procédures d'urgence avec contacts
+5. **Paramètres** - Configuration de l'app
+
+### Design Responsive Hybride
+- **Desktop (≥md)**: Sidebar + dashboard layout
+- **Mobile (<md)**: Bottom navigation + header compact
 
 ## Backend API
 
