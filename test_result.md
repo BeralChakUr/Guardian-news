@@ -226,17 +226,77 @@ backend:
         comment: "✅ Both /api and /api/v1 endpoints working for backward compatibility. All legacy endpoints tested successfully"
 
 frontend:
-  - task: "Frontend Testing"
-    implemented: false
-    working: "NA"
-    file: "N/A"
+  - task: "Web App - Desktop Layout with Sidebar"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/components/AppShell.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Desktop sidebar layout with navigation, tension index card, and stats. Screenshot verified."
+
+  - task: "Web App - Mobile Layout with Bottom Nav"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/components/AppShell.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Mobile responsive design with bottom navigation bar and header. Screenshot verified."
+
+  - task: "Web App - Actus Page with Filters"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/pages/ActusPage.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ News feed with filters (gravité, niveau technique, type de menace), search, and pagination. Displays 114 articles from API."
+
+  - task: "Web App - Urgence Page"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/pages/UrgencePage.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Emergency procedures page with scenarios and contacts. Screenshot verified."
+
+  - task: "Web App - Settings Page"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/pages/SettingsPage.tsx"
     stuck_count: 0
     priority: "low"
     needs_retesting: false
     status_history:
-      - working: "NA"
-        agent: "testing"
-        comment: "Frontend testing skipped as per instructions. Testing agent only tests backend APIs"
+      - working: true
+        agent: "main"
+        comment: "✅ Settings page with theme, language, and mode toggles."
+
+  - task: "Shared Types Package"
+    implemented: true
+    working: true
+    file: "/app/packages/shared-types/src/index.ts"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Shared TypeScript types for NewsItem, CyberTension, etc. compiled and working."
 
 metadata:
   created_by: "testing_agent"
