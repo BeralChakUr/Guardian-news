@@ -1,82 +1,248 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, memo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  RefreshControl,
-  TextInput,
   Modal,
-  Pressable,
+  TextInput,
+  RefreshControl,
+  ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../src/store/appStore';
 import { getTheme } from '../src/theme/colors';
+import { useNews } from '../src/hooks/useNews';
+import { useTension } from '../src/hooks/useTension';
 import { NewsCard } from '../src/components/NewsCard';
-import { mockNews } from '../src/data/mockNews';
+import { NewsCardSkeleton } from '../src/components/common/SkeletonLoader';
+import { TensionBanner } from '../src/components/news/TensionBanner';
+import { NewsHeader } from '../src/components/news/NewsHeader';
 import { News, Severity, ThreatLevel, ThreatType } from '../src/types';
+import { NewsFilters } from '../src/services/newsService';
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  
+  React.useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  
+  return debouncedValue;
+}
+
+// Memoized NewsCard wrapper
+const MemoizedNewsCard = memo(function MemoizedNewsCard({
+  item,
+  theme,
+  isFavorite,
+  isReadLater,
+  onPress,
+  onFavorite,
+  onReadLater,
+}: {
+  item: News;
+  theme: any;
+  isFavorite: boolean;
+  isReadLater: boolean;
+  onPress: () => void;
+  onFavorite: () => void;
+  onReadLater: () => void;
+}) {
+  return (
+    <NewsCard
+      news={item}
+      theme={theme}
+      isFavorite={isFavorite}
+      isReadLater={isReadLater}
+      onPress={onPress}
+      onFavorite={onFavorite}
+      onReadLater={onReadLater}
+    />
+  );
+});
 
 export default function ActusScreen() {
   const { isDarkMode, favorites, readLater, addFavorite, removeFavorite, addReadLater, removeReadLater } = useAppStore();
   const theme = getTheme(isDarkMode);
-  const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedNews, setSelectedNews] = useState<News | null>(null);
-  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  
+  // Search state with debounce
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedSearch = useDebounce(searchInput, 300);
+  
+  // Filter states
   const [selectedSeverity, setSelectedSeverity] = useState<Severity | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<ThreatLevel | null>(null);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
-
-  const filteredNews = useMemo(() => {
-    return mockNews.filter(news => {
-      const matchesSearch = searchQuery === '' || 
-        news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        news.tldr.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesSeverity = !selectedSeverity || news.severity === selectedSeverity;
-      const matchesLevel = !selectedLevel || news.level === selectedLevel;
-      return matchesSearch && matchesSeverity && matchesLevel;
-    });
-  }, [searchQuery, selectedSeverity, selectedLevel]);
-
-  const threatIndex = useMemo(() => {
-    const criticalCount = mockNews.filter(n => n.severity === 'critique').length;
-    const highCount = mockNews.filter(n => n.severity === 'eleve').length;
-    if (criticalCount > 0) return { level: 'Élevé', color: theme.severityCritical, reason: `${criticalCount} menace(s) critique(s)` };
-    if (highCount > 2) return { level: 'Moyen', color: theme.severityHigh, reason: `${highCount} menaces élevées` };
-    return { level: 'Faible', color: theme.severityLow, reason: 'Activité normale' };
-  }, []);
-
-  const clearFilters = () => {
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  
+  // Detail modal
+  const [selectedNews, setSelectedNews] = useState<News | null>(null);
+  
+  // Build filters object
+  const filters = useMemo<NewsFilters>(() => ({
+    severity: selectedSeverity,
+    level: selectedLevel,
+    search: debouncedSearch || undefined,
+  }), [selectedSeverity, selectedLevel, debouncedSearch]);
+  
+  // Use news hook
+  const { news, state, error, hasMore, total, loadMore, refresh, setFilters } = useNews();
+  
+  // Use tension hook
+  const { tension, loading: tensionLoading } = useTension();
+  
+  // Apply filters when they change
+  React.useEffect(() => {
+    setFilters(filters);
+  }, [filters, setFilters]);
+  
+  // Callbacks
+  const handleFavorite = useCallback((id: string) => {
+    if (favorites.includes(id)) {
+      removeFavorite(id);
+    } else {
+      addFavorite(id);
+    }
+  }, [favorites, addFavorite, removeFavorite]);
+  
+  const handleReadLater = useCallback((id: string) => {
+    if (readLater.includes(id)) {
+      removeReadLater(id);
+    } else {
+      addReadLater(id);
+    }
+  }, [readLater, addReadLater, removeReadLater]);
+  
+  const clearFilters = useCallback(() => {
     setSelectedSeverity(null);
     setSelectedLevel(null);
-    setSearchQuery('');
-  };
-
-  const hasFilters = selectedSeverity || selectedLevel || searchQuery;
+    setSearchInput('');
+  }, []);
+  
+  const hasActiveFilters = selectedSeverity || selectedLevel || searchInput;
+  
+  // Render item
+  const renderItem = useCallback(({ item }: { item: News }) => (
+    <MemoizedNewsCard
+      item={item}
+      theme={theme}
+      isFavorite={favorites.includes(item.id)}
+      isReadLater={readLater.includes(item.id)}
+      onPress={() => setSelectedNews(item)}
+      onFavorite={() => handleFavorite(item.id)}
+      onReadLater={() => handleReadLater(item.id)}
+    />
+  ), [theme, favorites, readLater, handleFavorite, handleReadLater]);
+  
+  // Key extractor
+  const keyExtractor = useCallback((item: News) => item.id, []);
+  
+  // Header component
+  const renderHeader = useCallback(() => (
+    <View>
+      {/* Tension Banner */}
+      <TensionBanner 
+        tension={tension} 
+        loading={tensionLoading} 
+        theme={theme} 
+      />
+      
+      {/* Daily Summary */}
+      <View style={[styles.dailySummary, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={styles.summaryHeader}>
+          <Ionicons name="today" size={20} color={theme.primary} />
+          <Text style={[styles.summaryTitle, { color: theme.text }]}>Résumé</Text>
+        </View>
+        <Text style={[styles.summaryText, { color: theme.textSecondary }]}>
+          {total} actualités • {state === 'loading' ? 'Chargement...' : 'Dernière mise à jour il y a quelques minutes'}
+        </Text>
+      </View>
+    </View>
+  ), [tension, tensionLoading, theme, total, state]);
+  
+  // Footer component (loading more)
+  const renderFooter = useCallback(() => {
+    if (state === 'loadingMore') {
+      return (
+        <View style={styles.footer}>
+          <ActivityIndicator size="small" color={theme.primary} />
+        </View>
+      );
+    }
+    if (!hasMore && news.length > 0) {
+      return (
+        <View style={styles.footer}>
+          <Text style={[styles.footerText, { color: theme.textMuted }]}>
+            Toutes les actualités sont chargées
+          </Text>
+        </View>
+      );
+    }
+    return null;
+  }, [state, hasMore, news.length, theme]);
+  
+  // Empty component
+  const renderEmpty = useCallback(() => {
+    if (state === 'loading') {
+      return (
+        <View>
+          {[1, 2, 3].map(i => (
+            <NewsCardSkeleton key={i} theme={theme} />
+          ))}
+        </View>
+      );
+    }
+    
+    if (state === 'error') {
+      return (
+        <View style={styles.emptyState}>
+          <Ionicons name="cloud-offline" size={48} color={theme.textMuted} />
+          <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+            Erreur de chargement
+          </Text>
+          <Text style={[styles.emptySubtext, { color: theme.textMuted }]}>
+            {error}
+          </Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: theme.primary }]}
+            onPress={refresh}
+          >
+            <Text style={styles.retryText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    
+    return (
+      <View style={styles.emptyState}>
+        <Ionicons name="search" size={48} color={theme.textMuted} />
+        <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+          Aucun résultat
+        </Text>
+        {hasActiveFilters && (
+          <TouchableOpacity onPress={clearFilters}>
+            <Text style={[styles.clearFiltersText, { color: theme.primary }]}>
+              Effacer les filtres
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }, [state, error, theme, hasActiveFilters, clearFilters, refresh]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: theme.border }]}>
-        <View>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Cybersécurité</Text>
-          <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>Restez informé et protégé</Text>
-        </View>
-        <View style={[styles.threatBadge, { backgroundColor: threatIndex.color + '20' }]}>
-          <Ionicons name="pulse" size={16} color={threatIndex.color} />
-          <Text style={[styles.threatText, { color: threatIndex.color }]}>{threatIndex.level}</Text>
-        </View>
-      </View>
-
+      <NewsHeader theme={theme} total={total} />
+      
       {/* Search & Filters */}
       <View style={styles.searchContainer}>
         <View style={[styles.searchBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -85,25 +251,31 @@ export default function ActusScreen() {
             style={[styles.searchInput, { color: theme.text }]}
             placeholder="Rechercher..."
             placeholderTextColor={theme.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+            value={searchInput}
+            onChangeText={setSearchInput}
           />
-          {searchQuery ? (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+          {searchInput ? (
+            <TouchableOpacity onPress={() => setSearchInput('')}>
               <Ionicons name="close-circle" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           ) : null}
         </View>
         <TouchableOpacity
-          style={[styles.filterButton, { backgroundColor: hasFilters ? theme.primary : theme.surface, borderColor: theme.border }]}
+          style={[
+            styles.filterButton,
+            { 
+              backgroundColor: hasActiveFilters ? theme.primary : theme.surface,
+              borderColor: theme.border
+            }
+          ]}
           onPress={() => setFilterModalVisible(true)}
         >
-          <Ionicons name="options" size={20} color={hasFilters ? '#fff' : theme.textMuted} />
+          <Ionicons name="options" size={20} color={hasActiveFilters ? '#fff' : theme.textMuted} />
         </TouchableOpacity>
       </View>
-
+      
       {/* Active Filters */}
-      {hasFilters && (
+      {hasActiveFilters && (
         <View style={styles.activeFilters}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersScroll}>
             {selectedSeverity && (
@@ -111,7 +283,9 @@ export default function ActusScreen() {
                 style={[styles.filterChip, { backgroundColor: theme.primary + '20' }]}
                 onPress={() => setSelectedSeverity(null)}
               >
-                <Text style={[styles.filterChipText, { color: theme.primary }]}>Gravité: {selectedSeverity}</Text>
+                <Text style={[styles.filterChipText, { color: theme.primary }]}>
+                  Gravité: {selectedSeverity}
+                </Text>
                 <Ionicons name="close" size={14} color={theme.primary} />
               </TouchableOpacity>
             )}
@@ -120,7 +294,9 @@ export default function ActusScreen() {
                 style={[styles.filterChip, { backgroundColor: theme.primary + '20' }]}
                 onPress={() => setSelectedLevel(null)}
               >
-                <Text style={[styles.filterChipText, { color: theme.primary }]}>Niveau: {selectedLevel}</Text>
+                <Text style={[styles.filterChipText, { color: theme.primary }]}>
+                  Niveau: {selectedLevel}
+                </Text>
                 <Ionicons name="close" size={14} color={theme.primary} />
               </TouchableOpacity>
             )}
@@ -133,49 +309,32 @@ export default function ActusScreen() {
           </ScrollView>
         </View>
       )}
-
-      {/* News Feed */}
-      <ScrollView
-        style={styles.feed}
-        contentContainerStyle={styles.feedContent}
+      
+      {/* News List */}
+      <FlatList
+        data={news}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        ListHeaderComponent={renderHeader}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={renderEmpty}
+        contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
+          <RefreshControl
+            refreshing={state === 'refreshing'}
+            onRefresh={refresh}
+            tintColor={theme.primary}
+          />
         }
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.3}
         showsVerticalScrollIndicator={false}
-      >
-        {/* Résumé du jour */}
-        <View style={[styles.dailySummary, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <View style={styles.summaryHeader}>
-            <Ionicons name="today" size={20} color={theme.primary} />
-            <Text style={[styles.summaryTitle, { color: theme.text }]}>Résumé du jour</Text>
-          </View>
-          <Text style={[styles.summaryText, { color: theme.textSecondary }]}>
-            {mockNews.length} actualités • {mockNews.filter(n => n.severity === 'critique' || n.severity === 'eleve').length} prioritaires
-          </Text>
-        </View>
-
-        {filteredNews.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="search" size={48} color={theme.textMuted} />
-            <Text style={[styles.emptyText, { color: theme.textMuted }]}>Aucun résultat</Text>
-          </View>
-        ) : (
-          filteredNews.map(news => (
-            <NewsCard
-              key={news.id}
-              news={news}
-              theme={theme}
-              isFavorite={favorites.includes(news.id)}
-              isReadLater={readLater.includes(news.id)}
-              onPress={() => setSelectedNews(news)}
-              onFavorite={() => favorites.includes(news.id) ? removeFavorite(news.id) : addFavorite(news.id)}
-              onReadLater={() => readLater.includes(news.id) ? removeReadLater(news.id) : addReadLater(news.id)}
-            />
-          ))
-        )}
-        <View style={{ height: 100 }} />
-      </ScrollView>
-
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={10}
+      />
+      
       {/* Filter Modal */}
       <Modal visible={filterModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
@@ -205,7 +364,7 @@ export default function ActusScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-
+            
             <Text style={[styles.filterLabel, { color: theme.textSecondary, marginTop: 16 }]}>Niveau</Text>
             <View style={styles.filterOptions}>
               {(['debutant', 'intermediaire', 'avance'] as ThreatLevel[]).map(level => (
@@ -224,7 +383,7 @@ export default function ActusScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-
+            
             <TouchableOpacity
               style={[styles.applyButton, { backgroundColor: theme.primary }]}
               onPress={() => setFilterModalVisible(false)}
@@ -234,7 +393,7 @@ export default function ActusScreen() {
           </View>
         </View>
       </Modal>
-
+      
       {/* News Detail Modal */}
       <Modal visible={!!selectedNews} animationType="slide" transparent>
         <View style={[styles.detailModalOverlay, { backgroundColor: theme.background }]}>
@@ -255,7 +414,7 @@ export default function ActusScreen() {
                     {selectedNews.source} • {selectedNews.date}
                   </Text>
                 </View>
-
+                
                 <View style={[styles.detailSection, { backgroundColor: theme.surface }]}>
                   <View style={styles.sectionHeader}>
                     <Ionicons name="flash" size={20} color={theme.primary} />
@@ -268,7 +427,7 @@ export default function ActusScreen() {
                     </View>
                   ))}
                 </View>
-
+                
                 <View style={[styles.detailSection, { backgroundColor: theme.surface }]}>
                   <View style={styles.sectionHeader}>
                     <Ionicons name="people" size={20} color={theme.warning} />
@@ -276,7 +435,7 @@ export default function ActusScreen() {
                   </View>
                   <Text style={[styles.impactText, { color: theme.textSecondary }]}>{selectedNews.impact}</Text>
                 </View>
-
+                
                 <View style={[styles.detailSection, { backgroundColor: theme.surface }]}>
                   <View style={styles.sectionHeader}>
                     <Ionicons name="checkmark-circle" size={20} color={theme.success} />
@@ -291,15 +450,17 @@ export default function ActusScreen() {
                     </View>
                   ))}
                 </View>
-
-                <View style={[styles.detailSection, { backgroundColor: theme.surface }]}>
-                  <View style={styles.sectionHeader}>
-                    <Ionicons name="information-circle" size={20} color={theme.primary} />
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>En savoir plus</Text>
+                
+                {selectedNews.details && (
+                  <View style={[styles.detailSection, { backgroundColor: theme.surface }]}>
+                    <View style={styles.sectionHeader}>
+                      <Ionicons name="information-circle" size={20} color={theme.primary} />
+                      <Text style={[styles.sectionTitle, { color: theme.text }]}>En savoir plus</Text>
+                    </View>
+                    <Text style={[styles.detailText, { color: theme.textSecondary }]}>{selectedNews.details}</Text>
                   </View>
-                  <Text style={[styles.detailText, { color: theme.textSecondary }]}>{selectedNews.details}</Text>
-                </View>
-
+                )}
+                
                 <View style={{ height: 100 }} />
               </ScrollView>
             )}
@@ -313,34 +474,6 @@ export default function ActusScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    marginTop: 2,
-  },
-  threatBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
-  },
-  threatText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -390,11 +523,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
   },
-  feed: {
-    flex: 1,
-  },
-  feedContent: {
-    paddingTop: 8,
+  listContent: {
+    flexGrow: 1,
+    paddingBottom: 100,
   },
   dailySummary: {
     marginHorizontal: 16,
@@ -416,6 +547,13 @@ const styles = StyleSheet.create({
   summaryText: {
     fontSize: 14,
   },
+  footer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 14,
+  },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -424,6 +562,26 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: 12,
     fontSize: 16,
+    fontWeight: '600',
+  },
+  emptySubtext: {
+    marginTop: 4,
+    fontSize: 14,
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  clearFiltersText: {
+    marginTop: 12,
+    fontSize: 14,
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,

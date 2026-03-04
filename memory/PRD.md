@@ -1,135 +1,144 @@
-# CyberGuard - Application de Veille Cybersécurité
+# Guardian News V2 - Plateforme de Veille Cybersécurité
 
 ## Vue d'ensemble
-CyberGuard est une application mobile-first de veille en cybersécurité conçue pour le grand public et les TPE/PME françaises. Elle offre des informations synthétisées et des actions concrètes pour se protéger en ligne.
+Guardian News est une application mobile-first de veille cybersécurité avec **ingestion RSS automatique** et données en temps réel provenant de **10 sources fiables**.
 
-## Architecture Technique
+## Architecture V2
 
 ### Stack
-- **Frontend**: React Native / Expo Router (tab-based navigation)
-- **State Management**: Zustand + AsyncStorage
-- **Backend**: FastAPI + MongoDB (prêt pour API)
-- **Theme**: Dark mode par défaut avec support light mode
+- **Frontend**: Expo SDK 55 / React Native / Expo Router
+- **Backend**: FastAPI avec ingestion RSS automatique
+- **Database**: MongoDB
+- **State**: Zustand + AsyncStorage (cache offline 6h TTL)
 
-### Structure des fichiers
+### Sources RSS (avec scores de confiance)
+| Source | Score | Statut |
+|--------|-------|--------|
+| CERT-FR | 10 | ✅ |
+| CISA | 10 | ✅ |
+| The Hacker News | 7 | ✅ |
+| BleepingComputer | 8 | ✅ |
+| Dark Reading | 7 | ✅ |
+| Krebs on Security | 8 | ✅ |
+| Malwarebytes Labs | 8 | ✅ |
+| Microsoft Security | 9 | ✅ |
+
+## Backend API
+
+### Endpoints
 ```
-/app/frontend/
-├── app/
-│   ├── _layout.tsx          # Tab navigation layout
-│   ├── index.tsx            # Tab 1: Actus (News)
-│   ├── attacks.tsx          # Tab 2: Attaques (Attack catalog)
-│   ├── protect.tsx          # Tab 3: Se protéger (Learning)
-│   ├── emergency.tsx        # Tab 4: Urgence (Emergency)
-│   └── toolbox.tsx          # Tab 5: Boîte à outils
-├── src/
-│   ├── types/index.ts       # TypeScript interfaces
-│   ├── data/
-│   │   ├── mockNews.ts      # Mock news data
-│   │   ├── mockAttacks.ts   # Attack catalog data
-│   │   ├── mockLearning.ts  # Learning modules
-│   │   ├── mockEmergency.ts # Emergency scenarios
-│   │   └── mockTools.ts     # Tools & glossary
-│   ├── store/appStore.ts    # Zustand store
-│   ├── theme/colors.ts      # Theme definitions
-│   └── components/
-│       └── NewsCard.tsx     # Reusable news card
+GET /api/news
+  - page: int (default: 1)
+  - page_size: int (default: 15, max: 50)
+  - severity: critique|eleve|moyen|faible
+  - type: phishing|ransomware|malware|data_leak|vuln|scam|apt|ddos|other
+  - level: debutant|intermediaire|avance
+  - search: string
+
+GET /api/news/{id}
+
+GET /api/news/tension
+  - Retourne l'indice de tension cyber (score 0-100)
+  - Cache TTL: 6h
+
+POST /api/news/refresh
+  - Déclenche une mise à jour manuelle des flux RSS
 ```
 
-## Fonctionnalités Implémentées (v1)
+### Ingestion RSS
+- **Fréquence**: Toutes les 30 minutes (scheduler APScheduler)
+- **Déduplication**: Par URL hash + similarité de titre (>70%)
+- **Classification automatique**:
+  - Severity: basée sur mots-clés (critical, zero-day, etc.)
+  - Threat type: phishing, ransomware, malware, etc.
+  - Level: selon source score et severity
+- **TL;DR généré**: 3 bullets max depuis le contenu
 
-### Tab 1 - Actus
-- ✅ Feed d'actualités cybersécurité
-- ✅ Cartes news avec TL;DR, impact, actions
+### Indice de Tension Cyber
+Calcul basé sur les 24 dernières heures:
+- Score = (critiques * 25) + (élevées * 10)
+- Niveaux: Critique (70+), Élevé (40-69), Modéré (20-39), Faible (<20)
+
+## Frontend Architecture
+
+### Structure
+```
+src/
+├── services/
+│   ├── apiClient.ts      # HTTP client avec retry + déduplication
+│   └── newsService.ts    # Service news (mock/API toggle)
+├── hooks/
+│   ├── useNews.ts        # Hook pagination + cache + anti-race condition
+│   └── useTension.ts     # Hook tension avec cache 6h
+├── components/
+│   ├── common/
+│   │   └── SkeletonLoader.tsx
+│   └── news/
+│       ├── TensionBanner.tsx
+│       └── NewsHeader.tsx
+```
+
+### Fonctionnalités Frontend V2
+- ✅ FlatList virtualisée (performance)
+- ✅ Pagination infinie avec anti-race condition
+- ✅ Skeleton loaders pendant chargement
+- ✅ Pull-to-refresh
+- ✅ Recherche avec debounce 300ms
 - ✅ Filtres (gravité, niveau)
-- ✅ Recherche
-- ✅ Favoris et "Lire plus tard"
-- ✅ Indice de menace global
-- ✅ Résumé du jour
-- ✅ Modal détail avec actions concrètes
+- ✅ Cache-first strategy (page 1) + background revalidation
+- ✅ Bannière tension dynamique depuis API
+- ✅ Mode mock/API via `EXPO_PUBLIC_USE_MOCK`
 
-### Tab 2 - Attaques
-- ✅ Catalogue de types d'attaques
-- ✅ Filtrage par catégorie
-- ✅ Fiches détaillées (définition, exemple, signes, impacts)
-- ✅ Mesures de prévention
-- ✅ Actions si victime
+### apiClient Features
+- Retry exponentiel sur 429/5xx (max 3 retries)
+- Déduplication des requêtes in-flight
+- Timeout configurable (default 30s)
+- Gestion standardisée des erreurs
 
-### Tab 3 - Se protéger
-- ✅ Parcours progressif (4 niveaux)
-- ✅ Leçons micro-learning
-- ✅ Quiz interactifs avec feedback
-- ✅ Système de points
-- ✅ Badges de progression
-- ✅ Streak de veille
-- ✅ Suivi de progression
+### useNews Hook
+```typescript
+const {
+  news,        // News[]
+  state,       // 'idle'|'loading'|'refreshing'|'loadingMore'|'error'|'success'
+  error,       // string | null
+  hasMore,     // boolean
+  total,       // number
+  loadMore,    // () => Promise<void>
+  refresh,     // () => Promise<void>
+  setFilters,  // (filters: NewsFilters) => void
+  filters,     // NewsFilters
+} = useNews();
+```
 
-### Tab 4 - Urgence
-- ✅ 6 scénarios d'incident
-- ✅ Actions immédiates priorisées
-- ✅ Contacts d'urgence (FR)
-- ✅ Numéros rapides (17, 112, Info Escroqueries)
-- ✅ Checklist de preuves
-- ✅ Liens de signalement
-- ✅ Modèles d'emails
-- ✅ Partage de procédures
+## Variables d'environnement
 
-### Tab 5 - Boîte à outils
-- ✅ Outils recommandés (10+)
-- ✅ Filtrage par catégorie
-- ✅ Glossaire cybersécurité (16 termes)
-- ✅ Recherche glossaire
-- ✅ Paramètres (dark mode, mode pro, notifications)
-- ✅ Liens vers sites officiels
+### Backend (.env)
+```
+MONGO_URL=mongodb://localhost:27017
+DB_NAME=guardian_news
+```
 
-## Données Mock (v1)
-- 6 actualités cybersécurité réalistes
-- 6 types d'attaques documentées
-- 4 niveaux d'apprentissage (11 leçons)
-- 6 scénarios d'urgence
-- 10 outils recommandés
-- 16 termes de glossaire
+### Frontend (.env)
+```
+EXPO_PUBLIC_API_URL=https://...
+EXPO_PUBLIC_USE_MOCK=false
+```
 
-## Stockage Local
-- Favoris et "Lire plus tard" persistés
-- Progression d'apprentissage
-- Badges débloqués
-- Streak de veille
-- Préférences utilisateur
+## Données Live
+- **100 articles** ingérés depuis 10 sources
+- **30 articles critiques** identifiés automatiquement
+- **Mise à jour toutes les 30 minutes**
 
-## Évolutions Prévues (v2)
-- [ ] API d'agrégation de news RSS
-- [ ] Notifications push
+## Performance
+- FlatList optimisée: `removeClippedSubviews`, `maxToRenderPerBatch=10`
+- Cache offline TTL 6h
+- Skeleton loaders pour UX fluide
+- Debounce 300ms sur recherche
+
+## Prochaines évolutions (V3)
+- [ ] Notifications push pour alertes critiques
+- [ ] Text-to-Speech pour TL;DR
+- [ ] Widget iOS/Android
 - [ ] Mode hors-ligne complet
-- [ ] Text-to-Speech (TTS) pour TL;DR
-- [ ] Widget quotidien
 - [ ] Authentification optionnelle
-- [ ] Synchronisation cloud
-- [ ] Contenu régional
-
-## Contacts FR Intégrés
-- Police/Gendarmerie (17)
-- Urgences européennes (112)
-- Info Escroqueries (0 805 805 817)
-- Cybermalveillance.gouv.fr
-- Signal Spam
-- Pharos (signalement)
-- ANSSI
-- CNIL
-- Perceval (fraude CB)
-- Have I Been Pwned
-
-## Design System
-### Couleurs (Dark Mode)
-- Background: #0D1117
-- Surface: #161B22
-- Primary: #58A6FF
-- Success: #3FB950
-- Warning: #F0883E
-- Danger: #F85149
-- Accent: #7EE787
-
-### Accessibilité
-- Contraste élevé
-- Touch targets 44px+
-- Navigation one-hand friendly
-- Icons Ionicons pour cohérence
+- [ ] Plus de sources RSS (ENISA, NVD, VulDB)
