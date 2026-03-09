@@ -1,0 +1,27 @@
+# Guardian News Backend - Requirements
+# Production-ready FastAPI backend for cybersecurity intelligence
+
+# Web Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.9
+
+# Data Validation
+pydantic>=2.6.0
+pydantic-settings>=2.1.0
+
+# Database
+motor>=3.3.0
+pymongo>=4.6.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# HTTP Client
+httpx>=0.26.0
+
+# AI Integration (optional - install if using OpenAI)
+# openai>=1.12.0
+
+# Utilities
+python-dateutil>=2.8.0
