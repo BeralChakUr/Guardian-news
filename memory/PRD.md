@@ -1,173 +1,94 @@
-# Guardian News V2 - Plateforme de Veille Cybersécurité
+# Guardian News - Plateforme de Cyber Intelligence
 
-## Vue d'ensemble
-Guardian News est une **plateforme de veille cybersécurité complète** avec :
-- **Application Web** responsive (Desktop + Mobile)
-- **Ingestion RSS automatique** de données en temps réel
-- **10+ sources fiables** (CERT-FR, CISA, BleepingComputer, etc.)
+## Énoncé du Problème Original
+Construire une plateforme complète d'intelligence en cybersécurité appelée "Guardian News" avec :
+- Agrégation de flux RSS de sources cybersécurité (CERT-FR, CISA, etc.)
+- Classification automatique des menaces par sévérité et type
+- Résumés IA générés automatiquement en français
+- Tableaux de bord pour le grand public et les professionnels
 
-## Architecture V2 - PNPM Monorepo
+## Personas Utilisateurs
+1. **Grand Public** : Veut comprendre les menaces actuelles simplement
+2. **Professionnels IT** : Besoin de détails techniques et d'actions recommandées
+3. **Décideurs** : Vue stratégique avec impact business
 
-### Structure
+## Fonctionnalités Implémentées ✅
+
+### Backend (FastAPI + MongoDB)
+- [x] Ingestion RSS automatique (10+ sources, toutes les 30 min)
+- [x] Classification automatique (sévérité, type de menace)
+- [x] Calcul de l'indice de tension cyber en temps réel
+- [x] API REST complète (/api/news, /api/news/tension, /api/news/{id})
+- [x] Endpoint AI Summary POST /api/news/ai-summary
+- [x] Cache des résumés IA (1h) pour optimiser les crédits
+- [x] Déduplication des articles par URL et similarité de titre
+
+### Frontend Web (React + Vite + TailwindCSS)
+- [x] Dashboard "Power BI style" avec KPIs
+- [x] Résumé IA des Menaces avec 3 modes (Simple, Exécutif, Analyste)
+- [x] Page d'actualités avec filtres (Gravité, Type de menace)
+- [x] Recherche par mot-clé
+- [x] Design responsive (mobile + desktop)
+- [x] Interface entièrement en français
+- [x] Navigation sidebar (desktop) + bottom nav (mobile)
+
+### Intégration IA
+- [x] Emergent LLM Key (GPT-4o) pour génération des résumés
+- [x] Traduction automatique des titres en français
+- [x] Extraction d'informations clés et actions recommandées
+
+## Bugs Corrigés (Session Actuelle)
+
+### Bug 1: AI Summary ne fonctionnait pas (P0) ✅ RÉSOLU
+- **Cause** : API `LlmChat` utilisait `send_message(string)` au lieu de `send_message(UserMessage)`
+- **Fix** : Import de `UserMessage` et utilisation correcte
+
+### Bug 2: Filtres causaient écran blanc (P1) ✅ RÉSOLU
+- **Cause** : Référence à variable `level` non définie dans le compteur de filtres
+- **Fix** : Supprimé les références à `level` dans ActusPage.tsx
+
+### Bug 3: Badge "Niveau Technique" à supprimer (P1) ✅ DÉJÀ FAIT
+- Les badges ont été supprimés dans la session précédente
+- Vérifié que NewsCard.tsx n'affiche plus de badge "Intermédiaire"
+
+## Architecture Technique
+
 ```
 /app
-├── apps/
-│   ├── mobile/         # Expo React Native app
-│   └── web/            # React + Vite + Tailwind
-├── backend/            # FastAPI + MongoDB
-├── packages/
-│   └── shared-types/   # TypeScript types partagés
-├── pnpm-workspace.yaml
-└── package.json
+├── apps/web/           # Frontend React + Vite
+│   ├── src/
+│   │   ├── components/ # AIThreatSummaryReal, NewsCard, etc.
+│   │   ├── pages/      # SimpleDashboard, ActusPage
+│   │   └── services/   # apiClient, newsService
+│   └── .env            # VITE_API_URL
+├── backend/            # FastAPI
+│   ├── server.py       # API + RSS ingestion + AI
+│   └── .env            # MONGO_URL, EMERGENT_LLM_KEY
+└── packages/shared-types/
 ```
 
-### Stack
-- **Web Frontend**: React 18 + Vite + Tailwind CSS + TanStack Query + Zustand
-- **Mobile Frontend**: Expo SDK 55 / React Native / Expo Router
-- **Backend**: FastAPI avec ingestion RSS automatique
-- **Database**: MongoDB
+## Endpoints API
 
-### Sources RSS (avec scores de confiance)
-| Source | Score | Statut |
-|--------|-------|--------|
-| CERT-FR | 10 | ✅ |
-| CISA | 10 | ✅ |
-| The Hacker News | 7 | ✅ |
-| BleepingComputer | 8 | ✅ |
-| Dark Reading | 7 | ✅ |
-| Krebs on Security | 8 | ✅ |
-| Malwarebytes Labs | 8 | ✅ |
-| Microsoft Security | 9 | ✅ |
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | /api/news | Liste paginée avec filtres |
+| GET | /api/news/{id} | Détail d'un article |
+| GET | /api/news/tension | Indice de tension cyber |
+| POST | /api/news/ai-summary | Génération résumé IA |
 
-## Application Web
+## Prochaines Étapes (Backlog)
 
-### Pages
-1. **Actus** - Fil d'actualités avec filtres et pagination
-2. **Attaques** - 8 types d'attaques détaillées (Phishing, Ransomware, etc.)
-3. **Outils** - 15 outils de sécurité recommandés
-4. **Urgence** - Procédures d'urgence avec contacts
-5. **Paramètres** - Configuration de l'app
+### P0 - Haute Priorité
+- [ ] Refactorer l'AI Summary vers un pipeline backend (enrichir les articles lors de l'ingestion)
 
-### Design Responsive Hybride
-- **Desktop (≥md)**: Sidebar + dashboard layout
-- **Mobile (<md)**: Bottom navigation + header compact
+### P1 - Moyenne Priorité  
+- [ ] Page "Se Protéger" (parcours d'apprentissage)
+- [ ] Dashboard avancé "Command Center" pour analystes
 
-## Backend API
-
-### Endpoints
-```
-GET /api/news
-  - page: int (default: 1)
-  - page_size: int (default: 15, max: 50)
-  - severity: critique|eleve|moyen|faible
-  - type: phishing|ransomware|malware|data_leak|vuln|scam|apt|ddos|other
-  - level: debutant|intermediaire|avance
-  - search: string
-
-GET /api/news/{id}
-
-GET /api/news/tension
-  - Retourne l'indice de tension cyber (score 0-100)
-  - Cache TTL: 6h
-
-POST /api/news/refresh
-  - Déclenche une mise à jour manuelle des flux RSS
-```
-
-### Ingestion RSS
-- **Fréquence**: Toutes les 30 minutes (scheduler APScheduler)
-- **Déduplication**: Par URL hash + similarité de titre (>70%)
-- **Classification automatique**:
-  - Severity: basée sur mots-clés (critical, zero-day, etc.)
-  - Threat type: phishing, ransomware, malware, etc.
-  - Level: selon source score et severity
-- **TL;DR généré**: 3 bullets max depuis le contenu
-
-### Indice de Tension Cyber
-Calcul basé sur les 24 dernières heures:
-- Score = (critiques * 25) + (élevées * 10)
-- Niveaux: Critique (70+), Élevé (40-69), Modéré (20-39), Faible (<20)
-
-## Frontend Architecture
-
-### Structure
-```
-src/
-├── services/
-│   ├── apiClient.ts      # HTTP client avec retry + déduplication
-│   └── newsService.ts    # Service news (mock/API toggle)
-├── hooks/
-│   ├── useNews.ts        # Hook pagination + cache + anti-race condition
-│   └── useTension.ts     # Hook tension avec cache 6h
-├── components/
-│   ├── common/
-│   │   └── SkeletonLoader.tsx
-│   └── news/
-│       ├── TensionBanner.tsx
-│       └── NewsHeader.tsx
-```
-
-### Fonctionnalités Frontend V2
-- ✅ FlatList virtualisée (performance)
-- ✅ Pagination infinie avec anti-race condition
-- ✅ Skeleton loaders pendant chargement
-- ✅ Pull-to-refresh
-- ✅ Recherche avec debounce 300ms
-- ✅ Filtres (gravité, niveau)
-- ✅ Cache-first strategy (page 1) + background revalidation
-- ✅ Bannière tension dynamique depuis API
-- ✅ Mode mock/API via `EXPO_PUBLIC_USE_MOCK`
-
-### apiClient Features
-- Retry exponentiel sur 429/5xx (max 3 retries)
-- Déduplication des requêtes in-flight
-- Timeout configurable (default 30s)
-- Gestion standardisée des erreurs
-
-### useNews Hook
-```typescript
-const {
-  news,        // News[]
-  state,       // 'idle'|'loading'|'refreshing'|'loadingMore'|'error'|'success'
-  error,       // string | null
-  hasMore,     // boolean
-  total,       // number
-  loadMore,    // () => Promise<void>
-  refresh,     // () => Promise<void>
-  setFilters,  // (filters: NewsFilters) => void
-  filters,     // NewsFilters
-} = useNews();
-```
-
-## Variables d'environnement
-
-### Backend (.env)
-```
-MONGO_URL=mongodb://localhost:27017
-DB_NAME=guardian_news
-```
-
-### Frontend (.env)
-```
-EXPO_PUBLIC_API_URL=https://...
-EXPO_PUBLIC_USE_MOCK=false
-```
-
-## Données Live
-- **100 articles** ingérés depuis 10 sources
-- **30 articles critiques** identifiés automatiquement
-- **Mise à jour toutes les 30 minutes**
-
-## Performance
-- FlatList optimisée: `removeClippedSubviews`, `maxToRenderPerBatch=10`
-- Cache offline TTL 6h
-- Skeleton loaders pour UX fluide
-- Debounce 300ms sur recherche
-
-## Prochaines évolutions (V3)
+### P2 - Basse Priorité
 - [ ] Notifications push pour alertes critiques
-- [ ] Text-to-Speech pour TL;DR
-- [ ] Widget iOS/Android
-- [ ] Mode hors-ligne complet
-- [ ] Authentification optionnelle
-- [ ] Plus de sources RSS (ENISA, NVD, VulDB)
+- [ ] Export PDF des rapports
+- [ ] Mode sombre/clair toggle
+
+## Date de Mise à Jour
+2026-03-09

@@ -173,18 +173,20 @@ export default function ActusPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full rounded-xl border border-gray-800 bg-cyber-surface py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-cyber-primary focus:outline-none focus:ring-1 focus:ring-cyber-primary"
+                data-testid="news-search-input"
               />
               {search && (
                 <button
                   onClick={() => setSearch('')}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                  data-testid="clear-search-btn"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
-            <div className="flex gap-2">
-              {/* Mobile Filter Button */}
+            <div className="flex gap-2 shrink-0">
+              {/* Mobile Filter Button - Always visible on small screens */}
               <button
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
                 className={`flex items-center gap-2 rounded-xl px-4 py-3 font-medium transition-colors lg:hidden ${
@@ -192,9 +194,10 @@ export default function ActusPage() {
                     ? 'bg-cyber-primary text-white'
                     : 'border border-gray-800 bg-cyber-surface text-cyber-secondary hover:text-white'
                 }`}
+                data-testid="mobile-filter-toggle"
               >
                 <Filter className="h-5 w-5" />
-                Filtres
+                <span className="hidden xs:inline">Filtres</span>
                 {hasActiveFilters && (
                   <span className="rounded-full bg-white/20 px-1.5 text-xs">
                     {[severity, type].filter(Boolean).length}
@@ -207,6 +210,7 @@ export default function ActusPage() {
                 onClick={() => refetch()}
                 className="flex items-center gap-2 rounded-xl border border-gray-800 bg-cyber-surface px-4 py-3 text-cyber-secondary hover:text-white transition-colors"
                 title="Rafraîchir"
+                data-testid="refresh-btn"
               >
                 <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
