@@ -64,3 +64,34 @@ export async function getNewsById(id: string): Promise<NewsItem> {
 export async function getTension(): Promise<CyberTension> {
   return apiRequest<CyberTension>('/api/news/tension');
 }
+
+// AI Summary Types
+export interface AISummaryItem {
+  article_id: string;
+  title_fr: string;
+  summary: string;
+  threat_type: string;
+  severity: string;
+  source: string;
+  link: string;
+  key_info?: string;
+  action?: string;
+}
+
+export interface AISummaryResponse {
+  mode: string;
+  generated_at: string;
+  items: AISummaryItem[];
+  global_summary: string;
+}
+
+export async function getAISummary(
+  mode: 'simple' | 'executive' | 'analyst' = 'simple',
+  limit: number = 5
+): Promise<AISummaryResponse> {
+  return apiRequest<AISummaryResponse>('/api/v1/news/ai-summary', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode, limit }),
+  });
+}

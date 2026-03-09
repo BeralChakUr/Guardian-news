@@ -20,9 +20,13 @@ import re
 from bs4 import BeautifulSoup
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from emergentintegrations.llm.chat import LlmChat
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Emergent LLM Key
+EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', 'sk-emergent-7C9D0F62b1e19D95d8')
 
 # Configure logging
 logging.basicConfig(
@@ -112,6 +116,34 @@ class TensionResponse(BaseModel):
     high_count: int
     recent_threats: List[str]
     updated_at: datetime
+
+# AI Summary Models
+class SummaryMode(str, Enum):
+    SIMPLE = "simple"
+    EXECUTIVE = "executive"
+    ANALYST = "analyst"
+
+class AISummaryRequest(BaseModel):
+    mode: SummaryMode = SummaryMode.SIMPLE
+    article_ids: Optional[List[str]] = None
+    limit: int = 5
+
+class AISummaryItem(BaseModel):
+    article_id: str
+    title_fr: str
+    summary: str
+    threat_type: str
+    severity: str
+    source: str
+    link: str
+    key_info: Optional[str] = None
+    action: Optional[str] = None
+
+class AISummaryResponse(BaseModel):
+    mode: str
+    generated_at: datetime
+    items: List[AISummaryItem]
+    global_summary: str
 
 # RSS Fetcher Service
 class RSSFetcherService:
@@ -587,6 +619,192 @@ async def trigger_refresh(background_tasks: BackgroundTasks):
     """Manually trigger RSS refresh"""
     background_tasks.add_task(rss_service.run_ingestion)
     return {"message": "Refresh started", "status": "processing"}
+
+# ============== AI SUMMARY ENDPOINT ==============
+
+AI_SUMMARY_SYSTEM_PROMPT = """Tu es un analyste en cybersécurité spécialisé dans l'intelligence des menaces.
+
+Ta mission est de lire des articles de cybersécurité et de produire un résumé clair et précis en français.
+
+Le résumé doit être concis, factuel et compréhensible par des professionnels IT et le grand public.
+
+Tu dois :
+1. Créer un titre court en français
+2. Rédiger un résumé de 2-4 phrases
+3. Identifier le type de menace (phishing, ransomware, vulnérabilité, malware, fuite de données, etc.)
+4. Évaluer la gravité (critique, élevée, moyenne, faible)
+5. Extraire les informations techniques clés si présentes
+6. Suggérer une action de vigilance
+
+N'invente pas d'information. Garde toujours le lien original."""
+
+async def generate_ai_summary(articles: List[Dict], mode: str) -> Dict:
+    """Generate AI summary using Emergent LLM"""
+    try:
+        import json
+        
+        # Prepare context for AI
+        articles_text = ""
+        for idx, article in enumerate(articles, 1):
+            tldr = article.get('tldr', article.get('title', ''))
+            if isinstance(tldr, list):
+                tldr = " ".join(tldr)
+            articles_text += f"""
+Article {idx}:
+Titre: {article.get('title', 'N/A')}
+Source: {article.get('source', 'N/A')}
+Lien: {article.get('url', 'N/A')}
+Contenu: {tldr[:500]}
+---
+"""
+        
+        # Adjust prompt based on mode
+        mode_instruction = {
+            "simple": "Génère un résumé très simple de 2 phrases maximum, accessible au grand public.",
+            "executive": "Génère un résumé stratégique pour les décideurs, focus sur l'impact business et les risques.",
+            "analyst": "Génère un résumé technique détaillé pour les analystes sécurité, avec IOCs et recommandations techniques."
+        }
+        
+        user_prompt = f"""Analyse ces articles de cybersécurité et génère un résumé en français.
+
+Mode: {mode_instruction.get(mode, mode_instruction['simple'])}
+
+{articles_text}
+
+Réponds au format JSON strict:
+{{
+    "global_summary": "Résumé global de la situation cyber actuelle en 2-3 phrases",
+    "items": [
+        {{
+            "title_fr": "Titre traduit en français",
+            "summary": "Résumé de l'article",
+            "threat_type": "phishing|ransomware|vulnérabilité|malware|fuite de données|ddos|autre",
+            "severity": "critique|élevée|moyenne|faible",
+            "key_info": "Information technique clé (optionnel)",
+            "action": "Action recommandée"
+        }}
+    ]
+}}"""
+
+        # Create LlmChat instance with correct parameters
+        session_id = f"ai_summary_{hashlib.md5(articles_text.encode()).hexdigest()[:8]}"
+        llm = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=session_id,
+            system_message=AI_SUMMARY_SYSTEM_PROMPT
+        )
+        
+        response = await llm.send_message(user_prompt)
+        
+        # Parse JSON response
+        json_match = re.search(r'\{[\s\S]*\}', response)
+        if json_match:
+            result = json.loads(json_match.group())
+            return result
+        else:
+            raise ValueError("No valid JSON in response")
+            
+    except Exception as e:
+        logging.error(f"AI Summary error: {e}")
+        # Return fallback summary
+        return {
+            "global_summary": "Résumé automatique indisponible. Veuillez consulter les articles individuellement.",
+            "items": [
+                {
+                    "title_fr": article.get('title', 'Article'),
+                    "summary": " ".join(article.get('tldr', ['Aucun résumé disponible'])) if isinstance(article.get('tldr'), list) else article.get('tldr', 'Aucun résumé disponible'),
+                    "threat_type": article.get('threat_type', 'autre'),
+                    "severity": article.get('severity', 'moyenne'),
+                    "key_info": None,
+                    "action": "Consultez la source pour plus d'informations"
+                }
+                for article in articles[:5]
+            ]
+        }
+
+@api_router.post("/news/ai-summary", response_model=AISummaryResponse)
+async def get_ai_summary(request: AISummaryRequest):
+    """Generate AI-powered threat intelligence summary"""
+    
+    # Get articles to summarize
+    if request.article_ids:
+        # Get specific articles
+        articles = []
+        for aid in request.article_ids[:request.limit]:
+            article = await db.news.find_one({"id": aid})
+            if article:
+                articles.append(article)
+    else:
+        # Get latest articles
+        cursor = db.news.find().sort("published_at", -1).limit(request.limit)
+        articles = await cursor.to_list(length=request.limit)
+    
+    if not articles:
+        raise HTTPException(status_code=404, detail="No articles found")
+    
+    # Check cache
+    cache_key = f"ai_summary_{request.mode}_{hashlib.md5(str([a['id'] for a in articles]).encode()).hexdigest()}"
+    cached = await db.ai_summaries.find_one({"_id": cache_key})
+    
+    if cached and (datetime.utcnow() - cached.get("generated_at", datetime.min)) < timedelta(hours=1):
+        # Return cached summary
+        return AISummaryResponse(
+            mode=request.mode.value,
+            generated_at=cached["generated_at"],
+            items=[AISummaryItem(**item) for item in cached["items"]],
+            global_summary=cached["global_summary"]
+        )
+    
+    # Generate new summary
+    ai_result = await generate_ai_summary(articles, request.mode.value)
+    
+    # Build response
+    items = []
+    for idx, article in enumerate(articles):
+        ai_item = ai_result.get("items", [{}])[idx] if idx < len(ai_result.get("items", [])) else {}
+        
+        # Handle tldr as list or string
+        tldr = article.get("tldr", "Aucun résumé")
+        if isinstance(tldr, list):
+            tldr = " ".join(tldr) if tldr else "Aucun résumé"
+        
+        summary_text = ai_item.get("summary")
+        if isinstance(summary_text, list):
+            summary_text = " ".join(summary_text) if summary_text else tldr
+        elif not summary_text:
+            summary_text = tldr
+            
+        items.append(AISummaryItem(
+            article_id=article["id"],
+            title_fr=ai_item.get("title_fr", article["title"]),
+            summary=summary_text,
+            threat_type=ai_item.get("threat_type", article.get("threat_type", "autre")),
+            severity=ai_item.get("severity", article.get("severity", "moyenne")),
+            source=article["source"],
+            link=article["url"],
+            key_info=ai_item.get("key_info"),
+            action=ai_item.get("action")
+        ))
+    
+    response = AISummaryResponse(
+        mode=request.mode.value,
+        generated_at=datetime.utcnow(),
+        items=items,
+        global_summary=ai_result.get("global_summary", "Analyse en cours...")
+    )
+    
+    # Cache the result
+    await db.ai_summaries.update_one(
+        {"_id": cache_key},
+        {"$set": {
+            "generated_at": response.generated_at,
+            "items": [item.dict() for item in items],
+            "global_summary": response.global_summary
+        }},
+        upsert=True
+    )
+    
+    return response
 
 # ============== LEGACY ENDPOINTS ==============
 

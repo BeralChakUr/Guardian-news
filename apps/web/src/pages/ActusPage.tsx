@@ -12,12 +12,6 @@ const severityOptions = [
   { value: 'faible', label: 'Faible', color: 'bg-green-500/20 text-green-400 border-green-500/40' },
 ];
 
-const levelOptions = [
-  { value: 'debutant', label: 'Débutant', color: 'bg-green-500/20 text-green-400 border-green-500/40' },
-  { value: 'intermediaire', label: 'Intermédiaire', color: 'bg-orange-500/20 text-orange-400 border-orange-500/40' },
-  { value: 'avance', label: 'Avancé', color: 'bg-red-500/20 text-red-400 border-red-500/40' },
-];
-
 const typeOptions = [
   { value: 'phishing', label: 'Phishing' },
   { value: 'ransomware', label: 'Ransomware' },
@@ -30,16 +24,14 @@ const typeOptions = [
 export default function ActusPage() {
   const [search, setSearch] = useState('');
   const [severity, setSeverity] = useState<string | null>(null);
-  const [level, setLevel] = useState<string | null>(null);
   const [type, setType] = useState<string | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const filters = useMemo(() => ({
     severity: severity || undefined,
-    level: level || undefined,
     type: type || undefined,
     search: search || undefined,
-  }), [severity, level, type, search]);
+  }), [severity, type, search]);
 
   const { data: tension, isLoading: tensionLoading } = useQuery({
     queryKey: ['tension'],
@@ -65,11 +57,10 @@ export default function ActusPage() {
   const news = data?.pages.flatMap(page => page.items) ?? [];
   const total = data?.pages[0]?.total ?? 0;
 
-  const hasActiveFilters = severity || level || type || search;
+  const hasActiveFilters = severity || type || search;
 
   const clearFilters = () => {
     setSeverity(null);
-    setLevel(null);
     setType(null);
     setSearch('');
   };
@@ -88,28 +79,6 @@ export default function ActusPage() {
               onClick={() => setSeverity(severity === opt.value ? null : opt.value)}
               className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
                 severity === opt.value
-                  ? opt.color + ' border-current'
-                  : 'border-gray-700 text-cyber-secondary hover:border-gray-600 hover:text-white'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Level */}
-      <div>
-        <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-cyber-secondary">
-          Niveau technique
-        </h4>
-        <div className="flex flex-wrap gap-2">
-          {levelOptions.map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => setLevel(level === opt.value ? null : opt.value)}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
-                level === opt.value
                   ? opt.color + ' border-current'
                   : 'border-gray-700 text-cyber-secondary hover:border-gray-600 hover:text-white'
               }`}

@@ -18,6 +18,7 @@ import {
   Settings,
   LayoutDashboard,
   Zap,
+  Bot,
 } from 'lucide-react';
 import {
   RadarChart,
@@ -37,15 +38,16 @@ import {
   Cell,
 } from 'recharts';
 import { getNews, getTension } from '../services/newsService';
+import AIThreatSummaryReal from '../components/AIThreatSummaryReal';
 
 // Sidebar Navigation
 const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', active: true },
-  { to: '/dashboard/news', icon: Newspaper, label: 'News Feed' },
-  { to: '/dashboard/attaques', icon: Swords, label: 'Attacks' },
-  { to: '/dashboard/outils', icon: Wrench, label: 'Tools' },
-  { to: '/dashboard/urgence', icon: AlertTriangle, label: 'Emergency' },
-  { to: '/dashboard/parametres', icon: Settings, label: 'Settings' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord', active: true },
+  { to: '/dashboard/news', icon: Newspaper, label: 'Fil d\'actualités' },
+  { to: '/dashboard/attaques', icon: Swords, label: 'Attaques' },
+  { to: '/dashboard/outils', icon: Wrench, label: 'Outils' },
+  { to: '/dashboard/urgence', icon: AlertTriangle, label: 'Urgence' },
+  { to: '/dashboard/parametres', icon: Settings, label: 'Paramètres' },
 ];
 
 const sources = ['CERT-FR', 'CISA', 'KrebsOnSecurity', 'BleepingComputer'];
@@ -125,9 +127,9 @@ export default function SimpleDashboard() {
   const threatDistribution = [
     { name: 'Phishing', count: news.filter(n => n.threat_type === 'phishing').length, color: '#58A6FF' },
     { name: 'Ransomware', count: news.filter(n => n.threat_type === 'ransomware').length, color: '#F85149' },
-    { name: 'Vulnerabilities', count: news.filter(n => n.threat_type === 'vuln').length, color: '#F0883E' },
+    { name: 'Vulnérabilités', count: news.filter(n => n.threat_type === 'vuln').length, color: '#F0883E' },
     { name: 'Malware', count: news.filter(n => n.threat_type === 'malware').length, color: '#A371F7' },
-    { name: 'Data Breach', count: news.filter(n => n.threat_type === 'data_leak').length, color: '#3FB950' },
+    { name: 'Fuite de données', count: news.filter(n => n.threat_type === 'data_leak').length, color: '#3FB950' },
   ].sort((a, b) => b.count - a.count);
 
   const totalThreats = threatDistribution.reduce((sum, t) => sum + t.count, 0);
@@ -137,19 +139,19 @@ export default function SimpleDashboard() {
     { category: 'Phishing', value: news.filter(n => n.threat_type === 'phishing').length * 10 || 20 },
     { category: 'Ransomware', value: news.filter(n => n.threat_type === 'ransomware').length * 10 || 15 },
     { category: 'Malware', value: news.filter(n => n.threat_type === 'malware').length * 10 || 25 },
-    { category: 'Vulnerabilities', value: news.filter(n => n.threat_type === 'vuln').length * 10 || 30 },
+    { category: 'Vulnérabilités', value: news.filter(n => n.threat_type === 'vuln').length * 10 || 30 },
     { category: 'DDoS', value: news.filter(n => n.threat_type === 'ddos').length * 10 || 10 },
-    { category: 'Data Breach', value: news.filter(n => n.threat_type === 'data_leak').length * 10 || 18 },
+    { category: 'Fuite données', value: news.filter(n => n.threat_type === 'data_leak').length * 10 || 18 },
     { category: 'Cloud', value: 12 },
-    { category: 'Identity', value: 8 },
+    { category: 'Identité', value: 8 },
   ];
 
   // Trend data (simulated weekly trend)
   const trendData = [
-    { week: 'Week 1', threats: Math.round(total * 0.6) },
-    { week: 'Week 2', threats: Math.round(total * 0.75) },
-    { week: 'Week 3', threats: Math.round(total * 0.85) },
-    { week: 'Week 4', threats: total },
+    { week: 'Sem. 1', threats: Math.round(total * 0.6) },
+    { week: 'Sem. 2', threats: Math.round(total * 0.75) },
+    { week: 'Sem. 3', threats: Math.round(total * 0.85) },
+    { week: 'Sem. 4', threats: total },
   ];
 
   // Calculate metrics
@@ -168,13 +170,13 @@ export default function SimpleDashboard() {
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case 'critique':
-        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400">Critical</span>;
+        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400">Critique</span>;
       case 'eleve':
-        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-orange-500/20 text-orange-400">High</span>;
+        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-orange-500/20 text-orange-400">Élevé</span>;
       case 'moyen':
-        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400">Medium</span>;
+        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400">Moyen</span>;
       default:
-        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">Low</span>;
+        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">Faible</span>;
     }
   };
 
@@ -224,7 +226,7 @@ export default function SimpleDashboard() {
 
         {/* Sources */}
         <div className="p-4 border-t border-gray-800">
-          <p className="text-xs text-gray-500 mb-3">Sources Monitored</p>
+          <p className="text-xs text-gray-500 mb-3">Sources surveillées</p>
           <div className="flex flex-wrap gap-2">
             {sources.map(source => (
               <span key={source} className="px-2 py-1 rounded-lg bg-white/5 text-xs text-gray-400">
@@ -241,14 +243,14 @@ export default function SimpleDashboard() {
         <header className="sticky top-0 z-10 bg-[#0A1628]/95 backdrop-blur border-b border-gray-800 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-white">Cyber Dashboard</h1>
-              <p className="text-sm text-gray-500">Real-time cybersecurity overview</p>
+              <h1 className="text-xl font-bold text-white">Tableau de Bord Cyber</h1>
+              <p className="text-sm text-gray-500">Vue d'ensemble cybersécurité en temps réel</p>
             </div>
             <Link
               to="/dashboard/news"
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 text-white font-medium hover:bg-cyan-400 transition-colors"
             >
-              View Cyber News
+              Voir les Actualités
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -259,37 +261,76 @@ export default function SimpleDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
               icon={Activity}
-              value={tension ? `${tension.level} (${tension.score}/100)` : 'Loading...'}
-              label="Cyber Threat Level"
+              value={tension ? `${tension.level} (${tension.score}/100)` : 'Chargement...'}
+              label="Niveau de Menace"
               color={tension ? getThreatLevelColor(tension.score) as any : 'cyan'}
             />
             <MetricCard
               icon={AlertTriangle}
               value={total}
-              label="Active Alerts"
+              label="Alertes Actives"
               color="orange"
-              trend="+42% this month"
+              trend="+42% ce mois"
             />
             <MetricCard
               icon={Bug}
               value={criticalCount}
-              label="Critical Vulnerabilities"
+              label="Vulnérabilités Critiques"
               color="red"
             />
             <MetricCard
               icon={Globe}
               value="10+"
-              label="Sources Monitored"
+              label="Sources Surveillées"
               color="green"
             />
+          </div>
+
+          {/* ==================== AI SUMMARY SECTION ==================== */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AIThreatSummaryReal />
+            
+            {/* Quick Stats */}
+            <div className="rounded-2xl bg-[#0D1B2A] border border-gray-800 p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-cyan-500/20">
+                  <Bot className="h-5 w-5 text-cyan-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">Intelligence IA</h3>
+                  <p className="text-xs text-gray-500">Analyse automatique des menaces</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                  <p className="text-sm text-cyan-400">
+                    <span className="font-medium">🤖 Résumé IA :</span> L'intelligence artificielle analyse en continu les flux RSS 
+                    de cybersécurité pour extraire les menaces les plus critiques et générer des résumés en français.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-cyber-bg">
+                    <p className="text-2xl font-bold text-white">{total}</p>
+                    <p className="text-xs text-gray-500">Articles analysés</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-cyber-bg">
+                    <p className="text-2xl font-bold text-white">3</p>
+                    <p className="text-xs text-gray-500">Modes de résumé</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Les résumés sont mis en cache pendant 1 heure pour optimiser les performances.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* ==================== CHARTS GRID ==================== */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* 1️⃣ CYBER RADAR */}
             <ChartCard
-              title="Cyber Threat Radar"
-              description="Real-time overview of current cybersecurity threats"
+              title="Radar des Cybermenaces"
+              description="Vue d'ensemble en temps réel des menaces actuelles"
             >
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -320,8 +361,8 @@ export default function SimpleDashboard() {
 
             {/* 2️⃣ THREAT TREND GRAPH */}
             <ChartCard
-              title="Threat Trend"
-              description="Evolution of detected threats over time"
+              title="Tendance des Menaces"
+              description="Évolution des menaces détectées"
             >
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -357,15 +398,15 @@ export default function SimpleDashboard() {
               </div>
               <div className="mt-4 flex items-center gap-2 text-sm">
                 <TrendingUp className="h-4 w-4 text-orange-400" />
-                <span className="text-orange-400 font-medium">+42% increase</span>
-                <span className="text-gray-500">this month</span>
+                <span className="text-orange-400 font-medium">+42% augmentation</span>
+                <span className="text-gray-500">ce mois-ci</span>
               </div>
             </ChartCard>
 
             {/* 3️⃣ THREAT TYPE DISTRIBUTION */}
             <ChartCard
-              title="Threat Distribution"
-              description="Breakdown of threats by category"
+              title="Répartition des Menaces"
+              description="Distribution par catégorie"
             >
               <div className="space-y-3">
                 {threatDistribution.map((threat, index) => {
@@ -395,16 +436,16 @@ export default function SimpleDashboard() {
 
             {/* 4️⃣ LATEST INCIDENTS TABLE */}
             <ChartCard
-              title="Latest Incidents"
-              description="Recent cyber security events"
+              title="Derniers Incidents"
+              description="Événements cybersécurité récents"
             >
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-800">
-                      <th className="text-left py-2 px-2 text-xs font-medium text-gray-500">Time</th>
+                      <th className="text-left py-2 px-2 text-xs font-medium text-gray-500">Heure</th>
                       <th className="text-left py-2 px-2 text-xs font-medium text-gray-500">Source</th>
-                      <th className="text-left py-2 px-2 text-xs font-medium text-gray-500">Severity</th>
+                      <th className="text-left py-2 px-2 text-xs font-medium text-gray-500">Gravité</th>
                       <th className="text-left py-2 px-2 text-xs font-medium text-gray-500">Description</th>
                     </tr>
                   </thead>
@@ -439,7 +480,7 @@ export default function SimpleDashboard() {
                   to="/dashboard/news"
                   className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors inline-flex items-center gap-1"
                 >
-                  View all incidents
+                  Voir tous les incidents
                   <ExternalLink className="h-3 w-3" />
                 </Link>
               </div>
@@ -450,12 +491,12 @@ export default function SimpleDashboard() {
           <div className="flex items-center justify-between py-4 border-t border-gray-800">
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Radio className="h-4 w-4 text-green-400 animate-pulse" />
-              <span>Live data • Last updated just now</span>
+              <span>Données en direct • Mis à jour à l'instant</span>
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-500">
-              <span>{total} threats monitored</span>
+              <span>{total} menaces surveillées</span>
               <span>•</span>
-              <span>10+ sources active</span>
+              <span>10+ sources actives</span>
             </div>
           </div>
         </div>

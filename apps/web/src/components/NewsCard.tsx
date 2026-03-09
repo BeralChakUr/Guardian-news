@@ -91,7 +91,7 @@ export default function NewsCard({ news }: NewsCardProps) {
       </div>
 
       {/* Title */}
-      <Link to={`/news/${news.id}`}>
+      <Link to={`/dashboard/news/${news.id}`}>
         <h3 className="mb-3 text-lg font-bold text-white transition-colors group-hover:text-cyber-primary">
           {news.title}
         </h3>
@@ -99,7 +99,7 @@ export default function NewsCard({ news }: NewsCardProps) {
 
       {/* TL;DR */}
       <div className="mb-4 space-y-1">
-        {news.tldr.slice(0, 2).map((item, i) => (
+        {(Array.isArray(news.tldr) ? news.tldr : [news.tldr]).slice(0, 2).map((item, i) => (
           <div key={i} className="flex items-start gap-2">
             <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-cyber-primary" />
             <p className="text-sm text-cyber-secondary line-clamp-1">{item}</p>
@@ -111,7 +111,7 @@ export default function NewsCard({ news }: NewsCardProps) {
       <div className="flex items-center justify-between border-t border-gray-800 pt-4">
         <span className="text-xs text-gray-500">{news.impact}</span>
         <Link
-          to={`/news/${news.id}`}
+          to={`/dashboard/news/${news.id}`}
           className="flex items-center gap-1 text-sm font-medium text-cyber-primary hover:underline"
         >
           Voir plus

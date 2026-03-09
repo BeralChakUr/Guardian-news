@@ -25,7 +25,7 @@ const attacks = [
     color: 'text-blue-400',
     bgColor: 'bg-blue-500/10',
     borderColor: 'border-blue-500/30',
-    level: 'Débutant',
+    severity: 'eleve',
     definition: "Le phishing est une technique d'hameçonnage où l'attaquant se fait passer pour une entité de confiance (banque, service public, entreprise) pour voler des informations sensibles.",
     example: "Vous recevez un email de 'votre banque' vous demandant de mettre à jour vos informations. Le lien mène vers un faux site qui capture vos identifiants.",
     signs: [
@@ -57,7 +57,7 @@ const attacks = [
     color: 'text-red-400',
     bgColor: 'bg-red-500/10',
     borderColor: 'border-red-500/30',
-    level: 'Avancé',
+    severity: 'critique',
     definition: "Un ransomware (rançongiciel) est un logiciel malveillant qui chiffre les fichiers de la victime et exige une rançon pour les déchiffrer.",
     example: "WannaCry, NotPetya, LockBit - ces ransomwares ont paralysé des hôpitaux, entreprises et administrations en chiffrant leurs données.",
     signs: [
@@ -90,7 +90,7 @@ const attacks = [
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/10',
     borderColor: 'border-purple-500/30',
-    level: 'Intermédiaire',
+    severity: 'eleve',
     definition: "Malware est un terme générique désignant tout logiciel conçu pour endommager, perturber ou prendre le contrôle d'un système : virus, trojans, spywares, etc.",
     example: "Un logiciel gratuit téléchargé sur un site non officiel contient un trojan qui donne un accès distant à l'attaquant.",
     signs: [
@@ -122,7 +122,7 @@ const attacks = [
     color: 'text-orange-400',
     bgColor: 'bg-orange-500/10',
     borderColor: 'border-orange-500/30',
-    level: 'Intermédiaire',
+    severity: 'critique',
     definition: "Une fuite de données survient quand des informations confidentielles sont exposées, volées ou publiées sans autorisation suite à une intrusion ou une erreur.",
     example: "Les données de millions d'utilisateurs d'un site e-commerce sont publiées sur le dark web après une intrusion dans leurs serveurs.",
     signs: [
@@ -155,7 +155,7 @@ const attacks = [
     color: 'text-yellow-400',
     bgColor: 'bg-yellow-500/10',
     borderColor: 'border-yellow-500/30',
-    level: 'Débutant',
+    severity: 'moyen',
     definition: "L'ingénierie sociale exploite la psychologie humaine plutôt que les failles techniques pour manipuler les victimes et obtenir des informations ou des accès.",
     example: "Un 'technicien informatique' appelle en prétendant une urgence et demande vos identifiants pour 'réparer' un problème inexistant.",
     signs: [
@@ -187,7 +187,7 @@ const attacks = [
     color: 'text-cyan-400',
     bgColor: 'bg-cyan-500/10',
     borderColor: 'border-cyan-500/30',
-    level: 'Avancé',
+    severity: 'eleve',
     definition: "Une attaque MITM intercepte les communications entre deux parties pour espionner, modifier ou injecter des données dans les échanges.",
     example: "Sur un Wi-Fi public non sécurisé, un attaquant intercepte votre connexion bancaire et capture vos identifiants.",
     signs: [
@@ -219,7 +219,7 @@ const attacks = [
     color: 'text-green-400',
     bgColor: 'bg-green-500/10',
     borderColor: 'border-green-500/30',
-    level: 'Avancé',
+    severity: 'moyen',
     definition: "Une attaque par déni de service distribué (DDoS) submerge un serveur ou réseau de requêtes pour le rendre inaccessible aux utilisateurs légitimes.",
     example: "Des milliers de machines infectées (botnet) envoient simultanément des requêtes vers un site web qui devient inaccessible.",
     signs: [
@@ -251,7 +251,7 @@ const attacks = [
     color: 'text-pink-400',
     bgColor: 'bg-pink-500/10',
     borderColor: 'border-pink-500/30',
-    level: 'Intermédiaire',
+    severity: 'faible',
     definition: "Le credential stuffing utilise des listes d'identifiants volés lors de fuites de données pour tenter de se connecter automatiquement à d'autres services.",
     example: "Un attaquant utilise les millions de couples email/mot de passe d'une fuite pour tester automatiquement des connexions sur Netflix, Amazon, etc.",
     signs: [
@@ -276,15 +276,34 @@ const attacks = [
   },
 ];
 
+const severityOptions = [
+  { value: 'critique', label: 'Critique', color: 'bg-red-500 text-white' },
+  { value: 'eleve', label: 'Élevé', color: 'bg-orange-500 text-white' },
+  { value: 'moyen', label: 'Moyen', color: 'bg-yellow-500 text-black' },
+  { value: 'faible', label: 'Faible', color: 'bg-green-500 text-white' },
+];
+
+const getSeverityLabel = (severity: string) => {
+  const opt = severityOptions.find(o => o.value === severity);
+  return opt ? opt.label : severity;
+};
+
+const getSeverityColor = (severity: string) => {
+  switch (severity) {
+    case 'critique': return 'text-red-400';
+    case 'eleve': return 'text-orange-400';
+    case 'moyen': return 'text-yellow-400';
+    default: return 'text-green-400';
+  }
+};
+
 export default function AttaquesPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [filterLevel, setFilterLevel] = useState<string | null>(null);
+  const [filterSeverity, setFilterSeverity] = useState<string | null>(null);
 
-  const filteredAttacks = filterLevel
-    ? attacks.filter(a => a.level === filterLevel)
+  const filteredAttacks = filterSeverity
+    ? attacks.filter(a => a.severity === filterSeverity)
     : attacks;
-
-  const levels = ['Débutant', 'Intermédiaire', 'Avancé'];
 
   return (
     <div className="pb-20 md:pb-0">
@@ -299,31 +318,29 @@ export default function AttaquesPage() {
         </p>
       </div>
 
-      {/* Level Filter */}
+      {/* Severity Filter */}
       <div className="mb-6 flex flex-wrap gap-2">
         <button
-          onClick={() => setFilterLevel(null)}
+          onClick={() => setFilterSeverity(null)}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            !filterLevel
+            !filterSeverity
               ? 'bg-cyber-primary text-white'
               : 'border border-gray-700 text-cyber-secondary hover:text-white'
           }`}
         >
           Tous
         </button>
-        {levels.map(level => (
+        {severityOptions.map(opt => (
           <button
-            key={level}
-            onClick={() => setFilterLevel(filterLevel === level ? null : level)}
+            key={opt.value}
+            onClick={() => setFilterSeverity(filterSeverity === opt.value ? null : opt.value)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              filterLevel === level
-                ? level === 'Débutant' ? 'bg-green-500 text-white' :
-                  level === 'Intermédiaire' ? 'bg-orange-500 text-white' :
-                  'bg-red-500 text-white'
+              filterSeverity === opt.value
+                ? opt.color
                 : 'border border-gray-700 text-cyber-secondary hover:text-white'
             }`}
           >
-            {level}
+            {opt.label}
           </button>
         ))}
       </div>
@@ -353,12 +370,8 @@ export default function AttaquesPage() {
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-cyber-secondary">{attack.category}</span>
                       <span className="text-gray-600">•</span>
-                      <span className={`text-xs font-medium ${
-                        attack.level === 'Débutant' ? 'text-green-400' :
-                        attack.level === 'Intermédiaire' ? 'text-orange-400' :
-                        'text-red-400'
-                      }`}>
-                        {attack.level}
+                      <span className={`text-xs font-medium ${getSeverityColor(attack.severity)}`}>
+                        {getSeverityLabel(attack.severity)}
                       </span>
                     </div>
                   </div>
