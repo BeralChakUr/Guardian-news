@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import AppShell from './components/AppShell'
 import LandingPage from './pages/LandingPage'
-import DashboardPage from './pages/DashboardPage'
+import SimpleDashboard from './pages/SimpleDashboard'
 import ActusPage from './pages/ActusPage'
 import NewsDetailPage from './pages/NewsDetailPage'
 import AttaquesPage from './pages/AttaquesPage'
@@ -15,9 +15,11 @@ export default function App() {
       {/* Public Landing Page */}
       <Route path="/" element={<LandingPage />} />
       
-      {/* Dashboard with AppShell */}
+      {/* Simple Dashboard - Power BI Style */}
+      <Route path="/dashboard" element={<SimpleDashboard />} />
+      
+      {/* Dashboard with AppShell for other pages */}
       <Route path="/dashboard" element={<AppShell />}>
-        <Route index element={<DashboardPage />} />
         <Route path="news" element={<ActusPage />} />
         <Route path="news/:id" element={<NewsDetailPage />} />
         <Route path="attaques" element={<AttaquesPage />} />
