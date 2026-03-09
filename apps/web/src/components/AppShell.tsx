@@ -1,15 +1,16 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Shield, Newspaper, AlertTriangle, Settings, Activity, Menu, X, ChevronRight, Swords, Wrench } from 'lucide-react';
+import { Shield, Newspaper, AlertTriangle, Settings, Activity, Menu, X, ChevronRight, Swords, Wrench, LayoutDashboard, Home } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTension } from '../services/newsService';
 
 const navItems = [
-  { to: '/', icon: Newspaper, label: 'Actus', description: 'Fil d\'actualités' },
-  { to: '/attaques', icon: Swords, label: 'Attaques', description: 'Types de menaces' },
-  { to: '/outils', icon: Wrench, label: 'Outils', description: 'Boîte à outils' },
-  { to: '/urgence', icon: AlertTriangle, label: 'Urgence', description: 'Procédures d\'urgence' },
-  { to: '/parametres', icon: Settings, label: 'Paramètres', description: 'Configuration' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', description: 'Command center', end: true },
+  { to: '/dashboard/news', icon: Newspaper, label: 'News Feed', description: 'All threats' },
+  { to: '/dashboard/attaques', icon: Swords, label: 'Attacks', description: 'Attack types' },
+  { to: '/dashboard/outils', icon: Wrench, label: 'Tools', description: 'Security toolkit' },
+  { to: '/dashboard/urgence', icon: AlertTriangle, label: 'Emergency', description: 'Incident response' },
+  { to: '/dashboard/parametres', icon: Settings, label: 'Settings', description: 'Configuration' },
 ];
 
 export default function AppShell() {
@@ -64,10 +65,11 @@ export default function AppShell() {
           {/* Navigation */}
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-2">
-              {navItems.map(({ to, icon: Icon, label, description }) => (
+              {navItems.map(({ to, icon: Icon, label, description, end }) => (
                 <li key={to}>
                   <NavLink
                     to={to}
+                    end={end}
                     className={({ isActive }) =>
                       `group flex items-center gap-x-3 rounded-xl p-3 text-sm font-medium transition-all ${
                         isActive
