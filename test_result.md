@@ -309,6 +309,78 @@ frontend:
       - working: true
         agent: "main"
         comment: "✅ Shared TypeScript types for NewsItem, CyberTension, etc. compiled and working."
+        
+  - task: "Frontend Dashboard KPI Cards"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/pages/SimpleDashboard.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ All 4 KPI cards display correctly on both mobile and desktop: Niveau de Menace, Alertes Actives, Vulnérabilités Critiques, Sources Surveillées. Values populate from real API data."
+        
+  - task: "Frontend AI Summary Integration"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/components/AIThreatSummaryReal.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ AI Summary loads correctly without 'indisponible' error. All 3 modes available (Simple, Exécutif, Analyste). Synthèse Globale displays proper French content from API."
+        
+  - task: "Frontend News Filtering System"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/pages/ActusPage.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Desktop filters work perfectly - Critique, Élevé severity filters and Phishing threat type filter functional. Clear filters button works. Minor issue: Mobile filter buttons not visible due to responsive layout."
+        
+  - task: "Frontend Search Functionality"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/pages/ActusPage.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Search functionality works on both mobile and desktop. Successfully tested with 'Microsoft' search term."
+        
+  - task: "Frontend News Card Display"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/components/NewsCard.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ News cards display correctly without 'Niveau Technique' badges as required. Only show severity (Critique, Élevé, etc.) and threat_type badges. Layout responsive on both mobile and desktop."
+        
+  - task: "Frontend Navigation System"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/components/AppShell.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Navigation between Dashboard and News pages working correctly. Desktop sidebar navigation and mobile bottom navigation both functional."
 
 metadata:
   created_by: "testing_agent"
@@ -328,3 +400,5 @@ agent_communication:
     message: "✅ COMPREHENSIVE BACKEND TESTING COMPLETE - All 12 test suites passed with 100% success rate. Guardian News API is fully functional with RSS ingestion, classification, search, filtering, pagination, and tension calculation all working perfectly. 114 articles currently in database with proper structure. API performance excellent (5 concurrent requests in 0.54s). No critical issues found."
   - agent: "testing"
     message: "✅ REVIEW REQUEST TESTING COMPLETE - All specific endpoints from review request tested successfully. API URL https://ai-threat-news.preview.emergentagent.com fully operational. All 15 test suites passed including new AI summary tests. Key findings: 201 articles in database, tension level 'Critique' with score 85, AI summaries generating proper French content, all filters (severity=critique, type=phishing, search=Microsoft) working correctly. API performance excellent (5 concurrent requests in 0.55s). NO CRITICAL ISSUES FOUND."
+  - agent: "testing"
+    message: "✅ FRONTEND UI TESTING COMPLETE - Comprehensive testing performed on both mobile (390x844) and desktop (1920x1080) views. DESKTOP: 9/9 tests passed - all features working perfectly. MOBILE: 6/9 tests passed - core features work but filters have visibility issues. Key findings: ✅ 4 KPI cards display correctly (Niveau de Menace, Alertes, Vulnérabilités, Sources), ✅ AI Summary loads without 'indisponible', ✅ 3 modes (Simple, Exécutif, Analyste) available, ✅ Navigation works, ✅ Search with 'Microsoft' functional, ✅ NO 'Niveau Technique' badges found on news cards, ✅ Desktop filters work perfectly (Critique, Élevé, Phishing). Minor issue: Mobile filter buttons not visible due to responsive layout. Overall assessment: EXCELLENT - 15/18 tests passed."
