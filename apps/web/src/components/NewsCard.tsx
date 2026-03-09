@@ -7,30 +7,18 @@ interface NewsCardProps {
   news: NewsItem;
 }
 
-const severityStyles = {
+const severityStyles: Record<string, string> = {
   critique: 'bg-red-500/20 text-red-400 border-red-500/30',
   eleve: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   moyen: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   faible: 'bg-green-500/20 text-green-400 border-green-500/30',
 };
 
-const levelStyles = {
-  debutant: 'bg-green-500/20 text-green-400',
-  intermediaire: 'bg-orange-500/20 text-orange-400',
-  avance: 'bg-red-500/20 text-red-400',
-};
-
-const severityLabels = {
+const severityLabels: Record<string, string> = {
   critique: 'Critique',
   eleve: 'Élevé',
   moyen: 'Moyen',
   faible: 'Faible',
-};
-
-const levelLabels = {
-  debutant: 'Débutant',
-  intermediaire: 'Intermédiaire',
-  avance: 'Avancé',
 };
 
 export default function NewsCard({ news }: NewsCardProps) {
@@ -48,6 +36,10 @@ export default function NewsCard({ news }: NewsCardProps) {
     e.preventDefault();
     isReadLater ? removeReadLater(news.id) : addReadLater(news.id);
   };
+
+  // Get severity style safely
+  const severityStyle = severityStyles[news.severity] || severityStyles.faible;
+  const severityLabel = severityLabels[news.severity] || news.severity;
 
   return (
     <article className="group rounded-2xl border border-gray-800 bg-cyber-surface p-5 transition-all hover:border-cyber-primary/50 hover:bg-cyber-elevated">
@@ -80,14 +72,16 @@ export default function NewsCard({ news }: NewsCardProps) {
         </div>
       </div>
 
-      {/* Tags */}
+      {/* Tags - Only severity and threat_type, no level */}
       <div className="mb-3 flex flex-wrap gap-2">
-        <span className={`rounded-full border px-3 py-1 text-xs font-medium ${severityStyles[news.severity]}`}>
-          {severityLabels[news.severity]}
+        <span className={`rounded-full border px-3 py-1 text-xs font-medium ${severityStyle}`}>
+          {severityLabel}
         </span>
-        <span className={`rounded-full px-3 py-1 text-xs font-medium ${levelStyles[news.level]}`}>
-          {levelLabels[news.level]}
-        </span>
+        {news.threat_type && (
+          <span className="rounded-full px-3 py-1 text-xs font-medium bg-cyber-elevated text-cyber-secondary">
+            {news.threat_type}
+          </span>
+        )}
       </div>
 
       {/* Title */}

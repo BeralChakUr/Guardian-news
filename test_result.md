@@ -225,6 +225,18 @@ backend:
         agent: "testing"
         comment: "✅ Both /api and /api/v1 endpoints working for backward compatibility. All legacy endpoints tested successfully"
 
+  - task: "AI Summary Generation API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ POST /api/news/ai-summary endpoint fully functional. Both 'simple' and 'executive' modes tested successfully. Generates proper French summaries (global_summary) with structured items containing title_fr, summary, threat_type, severity. No 'indisponible' issues found. API responds correctly with 200 status and valid JSON structure."
+
 frontend:
   - task: "Web App - Desktop Layout with Sidebar"
     implemented: true
@@ -314,3 +326,5 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: "✅ COMPREHENSIVE BACKEND TESTING COMPLETE - All 12 test suites passed with 100% success rate. Guardian News API is fully functional with RSS ingestion, classification, search, filtering, pagination, and tension calculation all working perfectly. 114 articles currently in database with proper structure. API performance excellent (5 concurrent requests in 0.54s). No critical issues found."
+  - agent: "testing"
+    message: "✅ REVIEW REQUEST TESTING COMPLETE - All specific endpoints from review request tested successfully. API URL https://ai-threat-news.preview.emergentagent.com fully operational. All 15 test suites passed including new AI summary tests. Key findings: 201 articles in database, tension level 'Critique' with score 85, AI summaries generating proper French content, all filters (severity=critique, type=phishing, search=Microsoft) working correctly. API performance excellent (5 concurrent requests in 0.55s). NO CRITICAL ISSUES FOUND."

@@ -89,7 +89,7 @@ export async function getAISummary(
   mode: 'simple' | 'executive' | 'analyst' = 'simple',
   limit: number = 5
 ): Promise<AISummaryResponse> {
-  return apiRequest<AISummaryResponse>('/api/v1/news/ai-summary', {
+  return apiRequest<AISummaryResponse>('/api/news/ai-summary', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mode, limit }),

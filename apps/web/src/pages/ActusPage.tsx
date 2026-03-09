@@ -153,7 +153,7 @@ export default function ActusPage() {
               </h3>
               {hasActiveFilters && (
                 <span className="rounded-full bg-cyber-primary px-2 py-0.5 text-xs font-medium text-white">
-                  {[severity, level, type, search].filter(Boolean).length}
+                  {[severity, type, search].filter(Boolean).length}
                 </span>
               )}
             </div>
@@ -197,7 +197,7 @@ export default function ActusPage() {
                 Filtres
                 {hasActiveFilters && (
                   <span className="rounded-full bg-white/20 px-1.5 text-xs">
-                    {[severity, level, type].filter(Boolean).length}
+                    {[severity, type].filter(Boolean).length}
                   </span>
                 )}
               </button>

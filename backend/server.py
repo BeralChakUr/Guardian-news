@@ -20,7 +20,7 @@ import re
 from bs4 import BeautifulSoup
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from emergentintegrations.llm.chat import LlmChat
+from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -694,7 +694,9 @@ Réponds au format JSON strict:
             system_message=AI_SUMMARY_SYSTEM_PROMPT
         )
         
-        response = await llm.send_message(user_prompt)
+        # Use UserMessage for the request
+        user_message = UserMessage(text=user_prompt)
+        response = await llm.send_message(user_message)
         
         # Parse JSON response
         json_match = re.search(r'\{[\s\S]*\}', response)
@@ -840,6 +842,10 @@ async def get_tension_legacy():
 @legacy_router.get("/news/{news_id}")
 async def get_news_detail_legacy(news_id: str):
     return await get_news_detail(news_id)
+
+@legacy_router.post("/news/ai-summary", response_model=AISummaryResponse)
+async def get_ai_summary_legacy(request: AISummaryRequest):
+    return await get_ai_summary(request)
 
 app.include_router(legacy_router)
 

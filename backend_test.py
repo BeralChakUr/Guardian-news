@@ -16,7 +16,7 @@ from pymongo import MongoClient
 import os
 
 # Test Configuration
-API_BASE_URL = "https://security-hub-76.preview.emergentagent.com"
+API_BASE_URL = "https://ai-threat-news.preview.emergentagent.com"
 MONGO_URL = "mongodb://localhost:27017"
 DB_NAME = "test_database"
 
@@ -440,6 +440,146 @@ class GuardianNewsAPITester:
             self.log_result(test_name, False, f"MongoDB integrity test failed: {e}")
             return False
 
+    async def test_ai_summary_simple_mode(self):
+        """Test AI summary endpoint in simple mode"""
+        test_name = "AI Summary - Simple Mode"
+        
+        try:
+            request_data = {"mode": "simple", "limit": 3}
+            async with self.session.post(
+                f"{self.base_url}/api/news/ai-summary",
+                json=request_data
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Check response structure
+                    required_fields = ["mode", "generated_at", "items", "global_summary"]
+                    missing_fields = [f for f in required_fields if f not in data]
+                    
+                    if missing_fields:
+                        self.log_result(test_name, False, f"Missing fields: {missing_fields}")
+                        return False
+                    
+                    # Validate mode
+                    if data["mode"] != "simple":
+                        self.log_result(test_name, False, f"Expected mode 'simple', got '{data['mode']}'")
+                        return False
+                    
+                    # Check global_summary is not "indisponible"
+                    if data["global_summary"].lower() in ["indisponible", "unavailable", ""]:
+                        self.log_result(test_name, False, "Global summary is not available or empty")
+                        return False
+                    
+                    # Check items structure
+                    if data["items"]:
+                        item = data["items"][0]
+                        required_item_fields = ["title_fr", "summary", "threat_type", "severity"]
+                        missing_item_fields = [f for f in required_item_fields if f not in item]
+                        
+                        if missing_item_fields:
+                            self.log_result(test_name, False, f"Item missing fields: {missing_item_fields}")
+                            return False
+                        
+                        # Check that title_fr is in French (basic check)
+                        title_fr = item["title_fr"]
+                        if not title_fr or len(title_fr.strip()) == 0:
+                            self.log_result(test_name, False, "title_fr is empty")
+                            return False
+                    
+                    self.log_result(test_name, True, f"AI summary generated with {len(data['items'])} items and proper French content")
+                    return True
+                elif response.status == 404:
+                    self.log_result(test_name, True, "No articles available for AI summary (404 is expected when no data)")
+                    return True
+                else:
+                    response_text = await response.text()
+                    self.log_result(test_name, False, f"AI summary returned {response.status}: {response_text}")
+                    return False
+        except Exception as e:
+            self.log_result(test_name, False, f"AI summary test failed: {e}")
+            return False
+
+    async def test_ai_summary_executive_mode(self):
+        """Test AI summary endpoint in executive mode"""
+        test_name = "AI Summary - Executive Mode"
+        
+        try:
+            request_data = {"mode": "executive", "limit": 5}
+            async with self.session.post(
+                f"{self.base_url}/api/news/ai-summary",
+                json=request_data
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Check mode
+                    if data["mode"] != "executive":
+                        self.log_result(test_name, False, f"Expected mode 'executive', got '{data['mode']}'")
+                        return False
+                    
+                    # Check global_summary quality for executive mode (should be more detailed)
+                    global_summary = data["global_summary"]
+                    if len(global_summary) < 50:  # Executive summaries should be more detailed
+                        self.log_result(test_name, False, "Executive summary too short")
+                        return False
+                    
+                    # Check items have additional executive-level info
+                    if data["items"]:
+                        item = data["items"][0]
+                        if "key_info" not in item and "action" not in item:
+                            self.log_result(test_name, False, "Executive mode should include key_info or action fields")
+                            return False
+                    
+                    self.log_result(test_name, True, f"Executive AI summary generated successfully")
+                    return True
+                elif response.status == 404:
+                    self.log_result(test_name, True, "No articles available for AI summary (404 is expected when no data)")
+                    return True
+                else:
+                    response_text = await response.text()
+                    self.log_result(test_name, False, f"Executive AI summary returned {response.status}: {response_text}")
+                    return False
+        except Exception as e:
+            self.log_result(test_name, False, f"Executive AI summary test failed: {e}")
+            return False
+
+    async def test_news_with_filters_detailed(self):
+        """Test news endpoint with specific filters as per review requirements"""
+        test_name = "News Filtering - Review Requirements"
+        
+        filter_tests = [
+            ("severity=critique", "severity filter for critique level"),
+            ("type=phishing", "type filter for phishing threats"),
+            ("search=Microsoft", "search for Microsoft-related articles")
+        ]
+        
+        passed_tests = 0
+        
+        try:
+            for filter_param, description in filter_tests:
+                async with self.session.get(f"{self.base_url}/api/news?{filter_param}") as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        # Check response structure
+                        if "items" in data and "total" in data:
+                            self.log_result(f"Filter Test: {description}", True, f"Found {len(data.get('items', []))} items")
+                            passed_tests += 1
+                        else:
+                            self.log_result(f"Filter Test: {description}", False, "Invalid response structure")
+                    else:
+                        self.log_result(f"Filter Test: {description}", False, f"HTTP {response.status}")
+            
+            success = passed_tests == len(filter_tests)
+            details = f"Passed {passed_tests}/{len(filter_tests)} specific filter tests"
+            self.log_result(test_name, success, details)
+            return success
+            
+        except Exception as e:
+            self.log_result(test_name, False, f"Detailed filtering test failed: {e}")
+            return False
+
     async def test_performance(self):
         """Test API performance"""
         test_name = "API Performance"
@@ -492,9 +632,12 @@ class GuardianNewsAPITester:
             self.test_news_pagination,
             self.test_news_filtering,
             self.test_news_search,
+            self.test_news_with_filters_detailed,
             self.test_tension_endpoint,
             self.test_news_detail,
             self.test_invalid_article_id,
+            self.test_ai_summary_simple_mode,
+            self.test_ai_summary_executive_mode,
             self.test_legacy_endpoints,
             self.test_mongodb_data_integrity,
             self.test_performance

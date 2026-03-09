@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Sparkles, RefreshCw, AlertTriangle, Shield, TrendingUp, Users, ChevronRight, Zap, Clock, ExternalLink, Bot } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Sparkles, RefreshCw, AlertTriangle, Shield, Users, Zap, Clock, ExternalLink, Bot } from 'lucide-react';
 import { getAISummary, type AISummaryResponse } from '../services/newsService';
 
 type SummaryMode = 'simple' | 'executive' | 'analyst';
@@ -16,28 +16,23 @@ const severityColors: Record<string, string> = {
   élevée: 'bg-orange-500/20 text-orange-400',
   moyenne: 'bg-yellow-500/20 text-yellow-400',
   faible: 'bg-green-500/20 text-green-400',
+  eleve: 'bg-orange-500/20 text-orange-400',
+  moyen: 'bg-yellow-500/20 text-yellow-400',
 };
 
 export default function AIThreatSummaryReal() {
   const [mode, setMode] = useState<SummaryMode>('simple');
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['ai-summary', mode],
     queryFn: () => getAISummary(mode, 5),
     staleTime: 30 * 60 * 1000, // 30 minutes
     retry: 1,
   });
 
-  const refreshMutation = useMutation({
-    mutationFn: () => getAISummary(mode, 5),
-    onSuccess: (newData) => {
-      queryClient.setQueryData(['ai-summary', mode], newData);
-    },
-  });
-
   const handleRefresh = () => {
-    refreshMutation.mutate();
+    queryClient.invalidateQueries({ queryKey: ['ai-summary', mode] });
   };
 
   if (isLoading) {
@@ -102,11 +97,11 @@ export default function AIThreatSummaryReal() {
           </div>
           <button
             onClick={handleRefresh}
-            disabled={refreshMutation.isPending}
+            disabled={isFetching}
             className="p-2 rounded-lg hover:bg-cyber-elevated transition-colors disabled:opacity-50"
             title="Régénérer le résumé"
           >
-            <RefreshCw className={`h-4 w-4 text-cyber-secondary ${refreshMutation.isPending ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 text-cyber-secondary ${isFetching ? 'animate-spin' : ''}`} />
           </button>
         </div>
 

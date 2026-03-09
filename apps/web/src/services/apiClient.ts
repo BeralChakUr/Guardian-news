@@ -5,8 +5,11 @@ export interface ApiError {
   message: string;
 }
 
-export async function apiRequest<T>(endpoint: string): Promise<T> {
-  const response = await fetch(`${API_URL}${endpoint}`);
+export async function apiRequest<T>(
+  endpoint: string, 
+  options?: RequestInit
+): Promise<T> {
+  const response = await fetch(`${API_URL}${endpoint}`, options);
   
   if (!response.ok) {
     throw {
