@@ -20,13 +20,21 @@ import re
 from bs4 import BeautifulSoup
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+
+# Optional AI integration - gracefully handle if not available
+try:
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    EMERGENT_AVAILABLE = True
+except ImportError:
+    LlmChat = None
+    UserMessage = None
+    EMERGENT_AVAILABLE = False
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# Emergent LLM Key
-EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', 'sk-emergent-7C9D0F62b1e19D95d8')
+# Emergent LLM Key (only used if emergentintegrations is available)
+EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
 
 # Configure logging
 logging.basicConfig(
@@ -639,7 +647,13 @@ Tu dois :
 N'invente pas d'information. Garde toujours le lien original."""
 
 async def generate_ai_summary(articles: List[Dict], mode: str) -> Dict:
-    """Generate AI summary using Emergent LLM"""
+    """Generate AI summary using Emergent LLM or fallback to mock data"""
+    
+    # Check if AI integration is available
+    if not EMERGENT_AVAILABLE or not EMERGENT_LLM_KEY:
+        logging.info("AI integration not available, using fallback summary")
+        return generate_fallback_summary(articles)
+    
     try:
         import json
         
@@ -708,8 +722,12 @@ Réponds au format JSON strict:
             
     except Exception as e:
         logging.error(f"AI Summary error: {e}")
-        # Return fallback summary
-        return {
+        return generate_fallback_summary(articles)
+
+
+def generate_fallback_summary(articles: List[Dict]) -> Dict:
+    """Generate a fallback summary when AI is not available"""
+    return {
             "global_summary": "Résumé automatique indisponible. Veuillez consulter les articles individuellement.",
             "items": [
                 {
