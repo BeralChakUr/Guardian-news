@@ -533,6 +533,18 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# ============== ROOT & HEALTH ENDPOINTS ==============
+
+@app.get("/", tags=["Health"])
+async def root():
+    """Root endpoint"""
+    return {"message": "Guardian News API is running"}
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    """Health check endpoint for Render"""
+    return {"status": "ok"}
+
 # Router
 api_router = APIRouter(prefix="/api/v1")
 
@@ -840,6 +852,142 @@ async def health():
 app.include_router(api_router)
 
 # Also keep /api prefix for backward compatibility
+# ============== DASHBOARD API ROUTES ==============
+
+dashboard_router = APIRouter(prefix="/api/dashboard")
+
+class DashboardMetrics(BaseModel):
+    threat_level: str
+    score: int
+    active_alerts: int
+    critical_vulnerabilities: int
+    monitored_sources: int
+
+class RadarCategory(BaseModel):
+    name: str
+    value: int
+
+class RadarResponse(BaseModel):
+    categories: List[RadarCategory]
+
+class TimelineEvent(BaseModel):
+    id: str
+    title: str
+    source: str
+    severity: str
+    threat_type: str
+    timestamp: datetime
+    description: str
+    link: str
+
+class TimelineResponse(BaseModel):
+    events: List[TimelineEvent]
+
+@dashboard_router.get("/metrics", response_model=DashboardMetrics)
+async def get_dashboard_metrics():
+    """Get dashboard metrics summary"""
+    # Get tension data
+    tension = await db.tension.find_one({"_id": "current"})
+    
+    # Count articles
+    total_articles = await db.news.count_documents({})
+    
+    # Count critical vulnerabilities
+    critical_vulns = await db.news.count_documents({
+        "severity": "critique",
+        "threat_type": "vuln"
+    })
+    
+    # Get unique sources
+    sources = await db.news.distinct("source")
+    
+    return DashboardMetrics(
+        threat_level=tension.get("level", "Modéré") if tension else "Modéré",
+        score=tension.get("score", 30) if tension else 30,
+        active_alerts=total_articles,
+        critical_vulnerabilities=critical_vulns,
+        monitored_sources=len(sources) if sources else len(RSS_SOURCES)
+    )
+
+@dashboard_router.get("/radar", response_model=RadarResponse)
+async def get_dashboard_radar():
+    """Get threat radar data by category"""
+    # Define category mappings
+    category_mapping = {
+        "Phishing": ["phishing"],
+        "Ransomware": ["ransomware"],
+        "Malware": ["malware"],
+        "Vulnérabilités": ["vuln"],
+        "Fuite de données": ["data_leak"],
+        "DDoS": ["ddos"],
+        "Cloud": ["cloud", "aws", "azure"],
+        "Identité": ["apt", "identity", "credential"]
+    }
+    
+    categories = []
+    for name, threat_types in category_mapping.items():
+        # Count articles matching this category
+        count = await db.news.count_documents({
+            "$or": [
+                {"threat_type": {"$in": threat_types}},
+                {"title": {"$regex": "|".join(threat_types), "$options": "i"}}
+            ]
+        })
+        categories.append(RadarCategory(name=name, value=count))
+    
+    return RadarResponse(categories=categories)
+
+@dashboard_router.get("/timeline", response_model=TimelineResponse)
+async def get_dashboard_timeline():
+    """Get recent threat timeline events"""
+    # Get recent articles sorted by date
+    cursor = db.news.find({}).sort("published_at", -1).limit(20)
+    articles = await cursor.to_list(length=20)
+    
+    # Map severity values to French
+    severity_map = {
+        "critique": "Critique",
+        "eleve": "Élevé", 
+        "moyen": "Moyen",
+        "faible": "Faible"
+    }
+    
+    # Map threat types to French
+    threat_type_map = {
+        "phishing": "Phishing",
+        "ransomware": "Ransomware",
+        "malware": "Malware",
+        "vuln": "Vulnérabilité",
+        "data_leak": "Fuite de données",
+        "ddos": "DDoS",
+        "apt": "APT",
+        "scam": "Arnaque",
+        "other": "Autre"
+    }
+    
+    events = []
+    for article in articles:
+        # Get description from tldr or content
+        tldr = article.get("tldr", [])
+        description = tldr[0] if tldr else article.get("content", "")[:200]
+        
+        events.append(TimelineEvent(
+            id=article.get("id", str(article.get("_id", ""))),
+            title=article.get("title", ""),
+            source=article.get("source", ""),
+            severity=severity_map.get(article.get("severity", "moyen"), "Moyen"),
+            threat_type=threat_type_map.get(article.get("threat_type", "other"), "Autre"),
+            timestamp=article.get("published_at", datetime.utcnow()),
+            description=description,
+            link=article.get("url", "")
+        ))
+    
+    return TimelineResponse(events=events)
+
+app.include_router(dashboard_router)
+
+# ============== LEGACY API ROUTES ==============
+
 legacy_router = APIRouter(prefix="/api")
 
 @legacy_router.get("/news", response_model=NewsResponse)
