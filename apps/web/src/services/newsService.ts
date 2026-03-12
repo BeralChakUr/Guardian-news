@@ -95,3 +95,48 @@ export async function getAISummary(
     body: JSON.stringify({ mode, limit }),
   });
 }
+
+// Dashboard Types
+export interface DashboardMetrics {
+  threat_level: string;
+  score: number;
+  active_alerts: number;
+  critical_vulnerabilities: number;
+  monitored_sources: number;
+}
+
+export interface RadarCategory {
+  name: string;
+  value: number;
+}
+
+export interface RadarResponse {
+  categories: RadarCategory[];
+}
+
+export interface TimelineEvent {
+  id: string;
+  title: string;
+  source: string;
+  severity: string;
+  threat_type: string;
+  timestamp: string;
+  description: string;
+  link: string;
+}
+
+export interface TimelineResponse {
+  events: TimelineEvent[];
+}
+
+export async function getDashboardMetrics(): Promise<DashboardMetrics> {
+  return apiRequest<DashboardMetrics>('/api/dashboard/metrics');
+}
+
+export async function getDashboardRadar(): Promise<RadarResponse> {
+  return apiRequest<RadarResponse>('/api/dashboard/radar');
+}
+
+export async function getDashboardTimeline(): Promise<TimelineResponse> {
+  return apiRequest<TimelineResponse>('/api/dashboard/timeline');
+}

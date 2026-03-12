@@ -381,6 +381,18 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ Navigation between Dashboard and News pages working correctly. Desktop sidebar navigation and mobile bottom navigation both functional."
+        
+  - task: "New Guardian News Homepage"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/pages/HomePage.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE HOMEPAGE TESTING COMPLETE - New Guardian News homepage fully functional on both desktop (1920x1080) and mobile (390x844). All requested sections verified: ✅ Hero section with 'Veille cybersécurité en temps réel' title and animated radar (shield icon), ✅ Navigation menu (desktop + mobile hamburger), ✅ Niveau de Menace Global section with score and metrics, ✅ Alertes du Jour section with alert cards, ✅ Analyse Guardian AI section with résumé, ✅ Radar des Menaces section (Recharts radar chart), ✅ Sources OSINT Surveillées section with 9 sources (CERT-FR, ANSSI, CISA, OWASP, Microsoft Security, KrebsOnSecurity, BleepingComputer, Dark Reading, Malwarebytes), ✅ CTA section 'Explorer le Dashboard Cyber' with 'Accéder au Dashboard SOC' button. All navigation flows work: Homepage → Dashboard → News. Mobile responsiveness perfect. URL https://ai-threat-news.preview.emergentagent.com fully operational."
 
 metadata:
   created_by: "testing_agent"
@@ -390,7 +402,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All backend tasks completed and tested"
+    - "New Guardian News Homepage testing complete"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -402,3 +414,5 @@ agent_communication:
     message: "✅ REVIEW REQUEST TESTING COMPLETE - All specific endpoints from review request tested successfully. API URL https://ai-threat-news.preview.emergentagent.com fully operational. All 15 test suites passed including new AI summary tests. Key findings: 201 articles in database, tension level 'Critique' with score 85, AI summaries generating proper French content, all filters (severity=critique, type=phishing, search=Microsoft) working correctly. API performance excellent (5 concurrent requests in 0.55s). NO CRITICAL ISSUES FOUND."
   - agent: "testing"
     message: "✅ FRONTEND UI TESTING COMPLETE - Comprehensive testing performed on both mobile (390x844) and desktop (1920x1080) views. DESKTOP: 9/9 tests passed - all features working perfectly. MOBILE: 6/9 tests passed - core features work but filters have visibility issues. Key findings: ✅ 4 KPI cards display correctly (Niveau de Menace, Alertes, Vulnérabilités, Sources), ✅ AI Summary loads without 'indisponible', ✅ 3 modes (Simple, Exécutif, Analyste) available, ✅ Navigation works, ✅ Search with 'Microsoft' functional, ✅ NO 'Niveau Technique' badges found on news cards, ✅ Desktop filters work perfectly (Critique, Élevé, Phishing). Minor issue: Mobile filter buttons not visible due to responsive layout. Overall assessment: EXCELLENT - 15/18 tests passed."
+  - agent: "testing"
+    message: "✅ NEW HOMEPAGE TESTING COMPLETE - Comprehensive testing of the new Guardian News homepage completed successfully on both desktop (1920x1080) and mobile (390x844). All review requirements verified: ✅ Hero section with 'Veille cybersécurité en temps réel' title and animated radar, ✅ Navigation menu (desktop + mobile hamburger fully functional), ✅ All 8 sections present and working (Niveau de Menace Global, Alertes du Jour, Analyse Guardian AI, Radar des Menaces with Recharts, Sources OSINT with 9 sources, CTA section), ✅ All navigation flows work (Homepage → Dashboard → News), ✅ Mobile responsiveness perfect, ✅ CTA buttons functional ('Voir les menaces actuelles' → /dashboard/news, 'Accéder au Dashboard SOC' → /dashboard). Homepage is production-ready with excellent UX/UI on both platforms."
