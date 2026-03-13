@@ -72,7 +72,7 @@ function SimpleContent({ data }: { data: AISummaryResponse }) {
             <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-slate-800/30">
               <CheckCircle className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-white text-sm">{item.title_fr || item.article_title}</p>
+                <p className="text-white text-sm">{item.title_fr || `Article #${item.article_id}`}</p>
                 {item.action && (
                   <p className="text-xs text-slate-500 mt-1">💡 {item.action}</p>
                 )}
@@ -163,7 +163,7 @@ function AnalystContent({ data }: { data: AISummaryResponse }) {
         {data.items?.slice(0, 4).map((item, index) => (
           <div key={index} className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
             <div className="flex items-start justify-between gap-4 mb-3">
-              <h5 className="text-white font-medium text-sm">{item.title_fr || item.article_title}</h5>
+              <h5 className="text-white font-medium text-sm">{item.title_fr || `Article #${item.article_id}`}</h5>
               <span className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ${severityColors[item.severity] || severityColors.moyen}`}>
                 {item.severity}
               </span>
