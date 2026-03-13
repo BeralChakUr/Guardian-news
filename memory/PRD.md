@@ -8,9 +8,9 @@ Guardian News est une plateforme d'intelligence cybersécurité qui agrège les 
 ### Backend (FastAPI + MongoDB)
 - **Déploiement**: Render
 - **Base de données**: MongoDB Atlas
-- **Endpoints**:
+- **Endpoints API**:
   - `GET /health` - Healthcheck
-  - `GET /api/news` - Liste des actualités (pagination, filtres)
+  - `GET /api/news` - Liste des actualités
   - `GET /api/news/{id}` - Détail d'un article
   - `GET /api/news/tension` - Niveau de menace
   - `POST /api/news/ai-summary` - Résumé IA
@@ -26,32 +26,40 @@ Guardian News est une plateforme d'intelligence cybersécurité qui agrège les 
 
 ### Homepage (/)
 - [x] Hero section avec radar animé (Framer Motion)
-- [x] Titre "Veille cybersécurité en temps réel"
 - [x] Navigation responsive (Accueil, Dashboard, Actualités, Paramètres)
-- [x] Niveau de Menace Global (score, alertes, vulnérabilités, sources)
-- [x] Graphique d'évolution sur 7 jours (Recharts LineChart)
-- [x] Alertes du Jour (5 cartes avec sévérité)
-- [x] Analyse Guardian AI (résumé GPT-4o)
-- [x] Radar des Menaces (Recharts RadarChart)
-- [x] Sources OSINT Surveillées (9 sources)
-- [x] Call-to-Action vers Dashboard SOC
-- [x] Footer
+- [x] Niveau de Menace Global avec graphique 7 jours
+- [x] Alertes du Jour
+- [x] Analyse Guardian AI
+- [x] Radar des Menaces (Recharts)
+- [x] Sources OSINT Surveillées
+- [x] Call-to-Action vers Dashboard
 
 ### Dashboard (/dashboard)
 - [x] KPIs Power BI style
-- [x] Résumé IA des Menaces
-- [x] Graphiques et métriques
+- [x] **3 modes AI Summary** :
+  - Simple (grand public)
+  - Exécutif (décideurs avec Impact Business et Recommandations)
+  - Analyste (professionnels avec CVE, outils, mitigation)
+- [x] Graphiques Radar et Timeline
 
-### Fil d'Actualités (/dashboard/news)
-- [x] Liste paginée
-- [x] Filtres (sévérité, type, recherche)
-- [x] Cartes d'actualités avec badges
+### Navigation
+- [x] **Ordre sidebar** : Accueil, Tableau de bord, Fil d'actualités, Attaques, Outils, Urgence, Sources, Paramètres
+- [x] **Logo cliquable** → redirection vers /
+- [x] **ScrollToTop** automatique lors des changements de route
+- [x] Bottom nav mobile (5 items)
 
-### Backend
-- [x] Ingestion RSS automatique (10 sources, 30 min)
-- [x] Classification automatique (sévérité, type de menace)
-- [x] Endpoints dashboard (metrics, radar, timeline)
-- [x] AI Summary avec fallback
+### Page Sources (/dashboard/sources) - NOUVEAU
+- [x] 11 sources OSINT avec cartes
+- [x] CERT-FR, ANSSI, CISA, OWASP, Microsoft Security, KrebsOnSecurity, BleepingComputer, Dark Reading, Malwarebytes, Cisco Talos, Google Threat Intelligence
+- [x] Badges de catégorie (Gouvernement, Enterprise, Média, Indépendant)
+- [x] Boutons "Visiter le site" (ouvre nouvelle tab)
+- [x] Section "Comment fonctionne la surveillance"
+
+### Paramètres (/dashboard/parametres)
+- [x] Dark mode toggle **SUPPRIMÉ** (thème sombre permanent SOC)
+- [x] Langue d'affichage (FR/EN)
+- [x] Mode d'affichage (Grand public/Professionnel)
+- [x] Section À propos
 
 ## Stack Technique
 
@@ -59,29 +67,31 @@ Guardian News est une plateforme d'intelligence cybersécurité qui agrège les 
 - **Backend**: Python 3.11, FastAPI, Motor (MongoDB async), APScheduler
 - **Déploiement**: Render (backend) + Vercel (frontend)
 
-## Configuration
+## Composants Créés/Modifiés
 
-### Variables d'environnement Backend
-```
-MONGO_URL=mongodb+srv://...
-DB_NAME=guardian_news
-FRONTEND_URL=https://your-app.vercel.app
-EMERGENT_LLM_KEY=... (optionnel)
-```
+| Fichier | Description |
+|---------|-------------|
+| `ScrollToTop.tsx` | Reset scroll position on route change |
+| `SourcesPage.tsx` | Nouvelle page des sources OSINT |
+| `AppShell.tsx` | Refactorisé avec nouveau menu |
+| `SettingsPage.tsx` | Sans dark mode toggle |
+| `AIThreatSummaryReal.tsx` | 3 modes (Simple, Exécutif, Analyste) |
+| `SimpleDashboard.tsx` | Logo cliquable, menu "Accueil" ajouté |
 
-### Variables d'environnement Frontend
-```
-VITE_API_URL=https://your-api.onrender.com
-```
+## Tests Passés ✅
+- Navigation Sidebar Order
+- Logo Clickable Functionality  
+- ScrollToTop Functionality
+- Sources Page (11 sources)
+- AI Summary 3 Modes
+- Settings (pas de dark mode)
+- Mobile Responsiveness
 
 ## Prochaines Étapes
 
-### P0 - Haute Priorité
-- [ ] Pipeline backend pour enrichir les articles avec AI lors de l'ingestion
-
 ### P1 - Moyenne Priorité
+- [ ] Pipeline backend pour enrichir les articles avec AI lors de l'ingestion
 - [ ] Page "Se Protéger" (parcours d'apprentissage)
-- [ ] Mode sombre/clair toggle
 
 ### P2 - Basse Priorité
 - [ ] Notifications push
@@ -89,4 +99,4 @@ VITE_API_URL=https://your-api.onrender.com
 - [ ] Dashboard avancé "Command Center"
 
 ## Date de Mise à Jour
-2026-03-12
+2026-03-13
