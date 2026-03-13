@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Shield, ArrowRight, Radio } from 'lucide-react';
+import { Shield, ArrowRight, Radio, ChevronDown } from 'lucide-react';
 
 function AnimatedRadar() {
   return (
@@ -69,15 +69,20 @@ function AnimatedRadar() {
 }
 
 export default function HeroSection() {
+  const scrollToNext = () => {
+    const section = document.getElementById("threat-section");
+    section?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+    <section className="relative min-h-[85vh] md:min-h-[80vh] flex items-center overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950" />
       <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(6,182,212,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
       <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-cyan-500/5 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-3xl" />
       
-      <div className="container mx-auto px-4 py-20 relative z-10">
+      <div className="container mx-auto px-4 py-16 md:py-20 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left content */}
           <motion.div
@@ -133,6 +138,24 @@ export default function HeroSection() {
           </motion.div>
         </div>
       </div>
+
+      {/* Scroll Cue Button */}
+      <motion.button
+        onClick={scrollToNext}
+        className="absolute bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-2 px-5 py-2.5 rounded-full border border-cyan-400/40 bg-slate-900/60 backdrop-blur-sm text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400/60 transition-all cursor-pointer group"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 1 }}
+        data-testid="scroll-cue-btn"
+      >
+        <span className="text-sm font-medium">Découvrir la veille</span>
+        <motion.div
+          animate={{ y: [0, 6, 0] }}
+          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+        >
+          <ChevronDown className="w-5 h-5 group-hover:text-cyan-400 transition-colors" />
+        </motion.div>
+      </motion.button>
     </section>
   );
 }

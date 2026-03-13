@@ -43,7 +43,7 @@ export default function ThreatLevelCard() {
 
   if (isLoading) {
     return (
-      <section className="py-16">
+      <section id="threat-section" className="py-16">
         <div className="container mx-auto px-4">
           <div className="h-64 rounded-2xl bg-slate-800/50 animate-pulse" />
         </div>
@@ -53,7 +53,7 @@ export default function ThreatLevelCard() {
 
   if (isError || !metrics) {
     return (
-      <section className="py-16">
+      <section id="threat-section" className="py-16">
         <div className="container mx-auto px-4">
           <div className="p-8 rounded-2xl bg-slate-800/50 border border-red-500/30 text-center">
             <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
@@ -67,7 +67,7 @@ export default function ThreatLevelCard() {
   const scoreColor = getScoreColor(metrics.score);
 
   return (
-    <section className="py-16 relative" data-testid="threat-level-section">
+    <section id="threat-section" className="py-16 relative" data-testid="threat-level-section">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
