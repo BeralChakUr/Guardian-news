@@ -1,66 +1,52 @@
-import { Moon, Sun, Globe, User, Bell } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Globe, User, Info, Shield, ExternalLink } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 
 export default function SettingsPage() {
-  const { isDarkMode, toggleDarkMode, language, setLanguage, mode, setMode } = useAppStore();
+  const { language, setLanguage, mode, setMode } = useAppStore();
 
   return (
     <div className="pb-20 md:pb-0">
-      <h1 className="text-2xl font-bold text-white mb-8">Paramètres</h1>
-
-      {/* Appearance */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold uppercase text-cyber-secondary mb-4">Apparence</h2>
-        <div className="rounded-2xl bg-cyber-surface overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-gray-800">
-            <div className="flex items-center gap-3">
-              {isDarkMode ? (
-                <Moon className="h-5 w-5 text-cyber-primary" />
-              ) : (
-                <Sun className="h-5 w-5 text-yellow-400" />
-              )}
-              <span className="text-white">Mode sombre</span>
-            </div>
-            <button
-              onClick={toggleDarkMode}
-              className={`relative h-7 w-12 rounded-full transition-colors ${
-                isDarkMode ? 'bg-cyber-primary' : 'bg-gray-600'
-              }`}
-            >
-              <span
-                className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${
-                  isDarkMode ? 'left-6' : 'left-1'
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-      </section>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <h1 className="text-2xl font-bold text-white">Paramètres</h1>
+        <p className="text-slate-400 mt-1">Configurez votre expérience Guardian News</p>
+      </motion.div>
 
       {/* Language */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold uppercase text-cyber-secondary mb-4">Langue</h2>
-        <div className="rounded-2xl bg-cyber-surface overflow-hidden">
-          <div className="flex items-center gap-3 p-4 border-b border-gray-800">
-            <Globe className="h-5 w-5 text-cyber-primary" />
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="mb-8"
+      >
+        <h2 className="text-sm font-semibold uppercase text-slate-500 mb-4">Langue</h2>
+        <div className="rounded-2xl bg-slate-800/30 border border-slate-700/50 overflow-hidden">
+          <div className="flex items-center gap-3 p-4">
+            <div className="p-2 rounded-lg bg-cyan-500/20">
+              <Globe className="h-5 w-5 text-cyan-400" />
+            </div>
             <span className="text-white flex-1">Langue d'affichage</span>
             <div className="flex gap-2">
               <button
                 onClick={() => setLanguage('fr')}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                   language === 'fr'
-                    ? 'bg-cyber-primary text-white'
-                    : 'bg-cyber-elevated text-cyber-secondary hover:text-white'
+                    ? 'bg-cyan-500 text-white'
+                    : 'bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700'
                 }`}
               >
                 Français
               </button>
               <button
                 onClick={() => setLanguage('en')}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                   language === 'en'
-                    ? 'bg-cyber-primary text-white'
-                    : 'bg-cyber-elevated text-cyber-secondary hover:text-white'
+                    ? 'bg-cyan-500 text-white'
+                    : 'bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700'
                 }`}
               >
                 English
@@ -68,65 +54,104 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Mode */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold uppercase text-cyber-secondary mb-4">Mode</h2>
-        <div className="rounded-2xl bg-cyber-surface overflow-hidden">
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="mb-8"
+      >
+        <h2 className="text-sm font-semibold uppercase text-slate-500 mb-4">Mode d'affichage</h2>
+        <div className="rounded-2xl bg-slate-800/30 border border-slate-700/50 overflow-hidden">
           <div className="flex items-center gap-3 p-4">
-            <User className="h-5 w-5 text-cyber-primary" />
+            <div className="p-2 rounded-lg bg-purple-500/20">
+              <User className="h-5 w-5 text-purple-400" />
+            </div>
             <span className="text-white flex-1">Niveau de contenu</span>
             <div className="flex gap-2">
               <button
                 onClick={() => setMode('public')}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                   mode === 'public'
-                    ? 'bg-cyber-primary text-white'
-                    : 'bg-cyber-elevated text-cyber-secondary hover:text-white'
+                    ? 'bg-cyan-500 text-white'
+                    : 'bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700'
                 }`}
               >
                 Grand public
               </button>
               <button
                 onClick={() => setMode('pro')}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                   mode === 'pro'
                     ? 'bg-orange-500 text-white'
-                    : 'bg-cyber-elevated text-cyber-secondary hover:text-white'
+                    : 'bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700'
                 }`}
               >
-                Pro
+                Professionnel
               </button>
             </div>
           </div>
         </div>
-      </section>
+        <p className="text-xs text-slate-500 mt-2 ml-2">
+          Le mode professionnel affiche plus de détails techniques dans les analyses.
+        </p>
+      </motion.section>
 
       {/* About */}
-      <section>
-        <h2 className="text-sm font-semibold uppercase text-cyber-secondary mb-4">À propos</h2>
-        <div className="rounded-2xl bg-cyber-surface overflow-hidden">
-          <div className="p-4 border-b border-gray-800">
-            <p className="text-white">Guardian News</p>
-            <p className="text-sm text-cyber-secondary">Version 2.0.0</p>
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <h2 className="text-sm font-semibold uppercase text-slate-500 mb-4">À propos</h2>
+        <div className="rounded-2xl bg-slate-800/30 border border-slate-700/50 overflow-hidden">
+          <div className="p-4 border-b border-slate-700/50">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20">
+                <Shield className="h-5 w-5 text-cyan-400" />
+              </div>
+              <div>
+                <p className="text-white font-medium">Guardian News</p>
+                <p className="text-sm text-slate-500">Version 2.0.0</p>
+              </div>
+            </div>
+          </div>
+          <div className="p-4 border-b border-slate-700/50">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-slate-700/50">
+                <Info className="h-5 w-5 text-slate-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-white">Plateforme OSINT</p>
+                <p className="text-sm text-slate-500">Intelligence cybersécurité en temps réel</p>
+              </div>
+            </div>
           </div>
           <a
-            href="#"
-            className="flex items-center justify-between p-4 border-b border-gray-800 hover:bg-cyber-elevated"
+            href="https://www.cert.ssi.gouv.fr/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between p-4 hover:bg-slate-700/30 transition-colors group"
           >
-            <span className="text-white">Mentions légales</span>
-            <span className="text-cyber-secondary">›</span>
-          </a>
-          <a
-            href="#"
-            className="flex items-center justify-between p-4 hover:bg-cyber-elevated"
-          >
-            <span className="text-white">Politique de confidentialité</span>
-            <span className="text-cyber-secondary">›</span>
+            <span className="text-white">Sources de données</span>
+            <ExternalLink className="h-4 w-4 text-slate-500 group-hover:text-cyan-400 transition-colors" />
           </a>
         </div>
-      </section>
+      </motion.section>
+
+      {/* Theme Info */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+        className="mt-8 p-4 rounded-xl bg-slate-800/20 border border-slate-700/30"
+      >
+        <p className="text-xs text-slate-500 text-center">
+          🌙 Guardian News utilise un thème sombre optimisé pour les environnements SOC et la surveillance continue.
+        </p>
+      </motion.div>
     </div>
   );
 }

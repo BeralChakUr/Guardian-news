@@ -19,6 +19,7 @@ import {
   LayoutDashboard,
   Zap,
   Bot,
+  Home,
 } from 'lucide-react';
 import {
   RadarChart,
@@ -42,11 +43,13 @@ import AIThreatSummaryReal from '../components/AIThreatSummaryReal';
 
 // Sidebar Navigation
 const navItems = [
+  { to: '/', icon: Home, label: 'Accueil' },
   { to: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord', active: true },
   { to: '/dashboard/news', icon: Newspaper, label: 'Fil d\'actualités' },
   { to: '/dashboard/attaques', icon: Swords, label: 'Attaques' },
   { to: '/dashboard/outils', icon: Wrench, label: 'Outils' },
   { to: '/dashboard/urgence', icon: AlertTriangle, label: 'Urgence' },
+  { to: '/dashboard/sources', icon: Globe, label: 'Sources' },
   { to: '/dashboard/parametres', icon: Settings, label: 'Paramètres' },
 ];
 
@@ -190,17 +193,17 @@ export default function SimpleDashboard() {
     <div className="min-h-screen bg-[#0A1628] flex">
       {/* ==================== SIDEBAR ==================== */}
       <aside className="hidden lg:flex w-64 flex-col bg-[#0D1B2A] border-r border-gray-800">
-        {/* Logo */}
+        {/* Logo - Clickable */}
         <div className="p-6 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-cyan-500/20">
-              <Shield className="h-6 w-6 text-cyan-400" />
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 group-hover:scale-105 transition-transform">
+              <Shield className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-white">Guardian News</h1>
+              <h1 className="font-bold text-white group-hover:text-cyan-400 transition-colors">Guardian News</h1>
               <p className="text-xs text-gray-500">Cyber Intelligence</p>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Navigation */}

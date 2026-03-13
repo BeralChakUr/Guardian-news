@@ -393,6 +393,90 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ COMPREHENSIVE HOMEPAGE TESTING COMPLETE - New Guardian News homepage fully functional on both desktop (1920x1080) and mobile (390x844). All requested sections verified: ✅ Hero section with 'Veille cybersécurité en temps réel' title and animated radar (shield icon), ✅ Navigation menu (desktop + mobile hamburger), ✅ Niveau de Menace Global section with score and metrics, ✅ Alertes du Jour section with alert cards, ✅ Analyse Guardian AI section with résumé, ✅ Radar des Menaces section (Recharts radar chart), ✅ Sources OSINT Surveillées section with 9 sources (CERT-FR, ANSSI, CISA, OWASP, Microsoft Security, KrebsOnSecurity, BleepingComputer, Dark Reading, Malwarebytes), ✅ CTA section 'Explorer le Dashboard Cyber' with 'Accéder au Dashboard SOC' button. All navigation flows work: Homepage → Dashboard → News. Mobile responsiveness perfect. URL https://ai-threat-news.preview.emergentagent.com fully operational."
+        
+  - task: "Refactored Frontend Review - Navigation Sidebar Order"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/components/AppShell.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Navigation sidebar order verified and functional. Correct order confirmed: Accueil, Tableau de bord, Fil d'actualités, Attaques, Outils, Urgence, Sources, Paramètres. All navigation items functional and redirect properly."
+        
+  - task: "Refactored Frontend Review - Logo Clickable Functionality"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/components/AppShell.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Logo clickable functionality verified. From /dashboard, clicking 'Guardian News' logo properly redirects to homepage (/). Test passed on desktop viewport 1920x1080."
+        
+  - task: "Refactored Frontend Review - ScrollToTop Functionality"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/components/AppShell.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ ScrollToTop functionality verified. When navigating from /dashboard/news (after scrolling down) to /dashboard via 'Tableau de bord', page properly loads at top (scroll position = 0)."
+        
+  - task: "Refactored Frontend Review - Sources Page Structure"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/pages/SourcesPage.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Sources page (/dashboard/sources) fully verified. Displays exactly 11 sources including all required ones: CERT-FR, ANSSI, CISA, OWASP, Microsoft Security, plus KrebsOnSecurity, BleepingComputer, Dark Reading, Malwarebytes Labs, Cisco Talos, Google Threat Intelligence. Each card has proper structure: nom, description, catégorie, 'Visiter le site' button. Interface in French as requested."
+        
+  - task: "Refactored Frontend Review - AI Summary 3 Modes"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/components/AIThreatSummaryReal.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ AI Summary 3 modes fully functional. All three modes verified and working: Simple (résumé court pour grand public), Exécutif (Résumé exécutif, Impact Business, Recommandations), Analyste (Vue technique, Types de menace, Info technique, Outils recommandés). Mode switching functional on dashboard."
+        
+  - task: "Refactored Frontend Review - Settings No Dark Mode"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/pages/SettingsPage.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Settings page (/dashboard/parametres) verified. NO dark mode toggle present as required. Available options: Langue (Français/English), Mode d'affichage (Grand public/Professionnel). Contains proper SOC message: 'Guardian News utilise un thème sombre optimisé pour les environnements SOC et la surveillance continue.'"
+        
+  - task: "Refactored Frontend Review - Mobile Responsiveness"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/components/AppShell.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Mobile responsiveness (390x844) verified. Mobile hamburger menu functional, bottom navigation bar with 5 items present and working. All major features accessible and functional on mobile viewport. French interface maintained across all screen sizes."
 
 metadata:
   created_by: "testing_agent"
@@ -402,7 +486,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "New Guardian News Homepage testing complete"
+    - "Refactored frontend review testing complete"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -416,3 +500,5 @@ agent_communication:
     message: "✅ FRONTEND UI TESTING COMPLETE - Comprehensive testing performed on both mobile (390x844) and desktop (1920x1080) views. DESKTOP: 9/9 tests passed - all features working perfectly. MOBILE: 6/9 tests passed - core features work but filters have visibility issues. Key findings: ✅ 4 KPI cards display correctly (Niveau de Menace, Alertes, Vulnérabilités, Sources), ✅ AI Summary loads without 'indisponible', ✅ 3 modes (Simple, Exécutif, Analyste) available, ✅ Navigation works, ✅ Search with 'Microsoft' functional, ✅ NO 'Niveau Technique' badges found on news cards, ✅ Desktop filters work perfectly (Critique, Élevé, Phishing). Minor issue: Mobile filter buttons not visible due to responsive layout. Overall assessment: EXCELLENT - 15/18 tests passed."
   - agent: "testing"
     message: "✅ NEW HOMEPAGE TESTING COMPLETE - Comprehensive testing of the new Guardian News homepage completed successfully on both desktop (1920x1080) and mobile (390x844). All review requirements verified: ✅ Hero section with 'Veille cybersécurité en temps réel' title and animated radar, ✅ Navigation menu (desktop + mobile hamburger fully functional), ✅ All 8 sections present and working (Niveau de Menace Global, Alertes du Jour, Analyse Guardian AI, Radar des Menaces with Recharts, Sources OSINT with 9 sources, CTA section), ✅ All navigation flows work (Homepage → Dashboard → News), ✅ Mobile responsiveness perfect, ✅ CTA buttons functional ('Voir les menaces actuelles' → /dashboard/news, 'Accéder au Dashboard SOC' → /dashboard). Homepage is production-ready with excellent UX/UI on both platforms."
+  - agent: "testing"
+    message: "✅ REFACTORED FRONTEND REVIEW COMPLETE - Comprehensive testing of all review requirements completed successfully on desktop (1920x1080) and mobile (390x844). RESULTS: ✅ Navigation Sidebar order verified (Accueil, Tableau de bord, Fil d'actualités, Attaques, Outils, Urgence, Sources, Paramètres), ✅ Logo clickable functionality from dashboard → homepage working, ✅ ScrollToTop functionality verified, ✅ Sources page (/dashboard/sources) displays exactly 11 sources including CERT-FR, ANSSI, CISA, OWASP, Microsoft Security with proper structure (name, description, category, 'Visiter le site' button), ✅ AI Summary 3 modes (Simple, Exécutif, Analyste) all present and functional, ✅ Settings page has Langue and Mode d'affichage options with NO dark mode toggle (only SOC informational message), ✅ Mobile hamburger menu and bottom nav (5 items) functional. Interface in French as requested. ALL REQUIREMENTS MET - Guardian News refactored frontend is production-ready."
