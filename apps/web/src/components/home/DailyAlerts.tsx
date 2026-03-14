@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, ArrowRight, Clock, ExternalLink } from 'lucide-react';
-import { getNews, type NewsItem } from '../../services/newsService';
+import { AlertTriangle, ArrowRight, Clock, ExternalLink, Globe } from 'lucide-react';
+import { getGroupedNews, type NewsItem } from '../../services/newsService';
 
 const severityConfig: Record<string, { bg: string; text: string; label: string }> = {
   critique: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Critique' },
@@ -11,9 +11,18 @@ const severityConfig: Record<string, { bg: string; text: string; label: string }
   faible: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Faible' },
 };
 
+const countryFlags: Record<string, string> = {
+  FR: '🇫🇷',
+  US: '🇺🇸',
+  GB: '🇬🇧',
+  DE: '🇩🇪',
+  EU: '🇪🇺',
+};
+
 function AlertCard({ item, index }: { item: NewsItem; index: number }) {
   const severity = severityConfig[item.severity] || severityConfig.moyen;
   const summary = item.tldr?.[0] || item.content?.substring(0, 150) || '';
+  const flag = countryFlags[item.country || 'US'] || '🌍';
   
   return (
     <motion.div
@@ -25,9 +34,12 @@ function AlertCard({ item, index }: { item: NewsItem; index: number }) {
       data-testid={`alert-card-${index}`}
     >
       <div className="flex items-start justify-between gap-4 mb-3">
-        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${severity.bg} ${severity.text}`}>
-          {severity.label}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-base" title={item.country === 'FR' ? 'France' : 'International'}>{flag}</span>
+          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${severity.bg} ${severity.text}`}>
+            {severity.label}
+          </span>
+        </div>
         <span className="text-xs text-slate-500 flex items-center gap-1">
           <Clock className="w-3 h-3" />
           {new Date(item.published_at).toLocaleDateString('fr-FR')}
@@ -56,10 +68,56 @@ function AlertCard({ item, index }: { item: NewsItem; index: number }) {
   );
 }
 
+interface AlertsSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  items: NewsItem[];
+  emptyMessage: string;
+  countryFilter?: string;
+}
+
+function AlertsSection({ title, icon, items, emptyMessage, countryFilter }: AlertsSectionProps) {
+  return (
+    <div className="mb-12">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="flex items-center justify-between mb-6"
+      >
+        <h3 className="text-xl font-bold text-white flex items-center gap-3">
+          {icon}
+          {title}
+          <span className="text-sm font-normal text-slate-400">({items.length})</span>
+        </h3>
+        <Link
+          to={countryFilter ? `/dashboard/news?country=${countryFilter}` : '/dashboard/news'}
+          className="hidden sm:inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors text-sm"
+        >
+          Voir toutes
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </motion.div>
+
+      {items.length === 0 ? (
+        <div className="p-6 rounded-xl bg-slate-800/30 border border-slate-700/50 text-center">
+          <p className="text-slate-400">{emptyMessage}</p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.slice(0, 3).map((item, index) => (
+            <AlertCard key={item.id} item={item} index={index} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DailyAlerts() {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['news-alerts', 5],
-    queryFn: () => getNews(1, 5),
+    queryKey: ['news-grouped'],
+    queryFn: () => getGroupedNews(6),
     staleTime: 60000,
   });
 
@@ -89,10 +147,17 @@ export default function DailyAlerts() {
         </motion.div>
 
         {isLoading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-48 rounded-xl bg-slate-800/50 animate-pulse" />
-            ))}
+          <div className="space-y-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-48 rounded-xl bg-slate-800/50 animate-pulse" />
+              ))}
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-48 rounded-xl bg-slate-800/50 animate-pulse" />
+              ))}
+            </div>
           </div>
         ) : isError ? (
           <div className="p-8 rounded-xl bg-slate-800/50 border border-red-500/30 text-center">
@@ -100,11 +165,24 @@ export default function DailyAlerts() {
             <p className="text-slate-400">Actualités indisponibles</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data?.items.slice(0, 5).map((item, index) => (
-              <AlertCard key={item.id} item={item} index={index} />
-            ))}
-          </div>
+          <>
+            {/* French Alerts - Priority */}
+            <AlertsSection
+              title="Alertes France"
+              icon={<span className="text-2xl">🇫🇷</span>}
+              items={data?.france || []}
+              emptyMessage="Aucune alerte française récente"
+              countryFilter="FR"
+            />
+
+            {/* International Alerts */}
+            <AlertsSection
+              title="Alertes Internationales"
+              icon={<Globe className="w-6 h-6 text-blue-400" />}
+              items={data?.international || []}
+              emptyMessage="Aucune alerte internationale récente"
+            />
+          </>
         )}
 
         <div className="mt-6 text-center sm:hidden">

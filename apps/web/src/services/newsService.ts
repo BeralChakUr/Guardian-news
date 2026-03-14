@@ -13,6 +13,9 @@ export interface NewsItem {
   impact: string;
   actions: string[];
   content?: string;
+  country?: string;
+  language?: string;
+  priority?: number;
 }
 
 export interface NewsResponse {
@@ -38,6 +41,7 @@ export interface NewsFilters {
   type?: string;
   level?: string;
   search?: string;
+  country?: string;
 }
 
 export async function getNews(
@@ -53,6 +57,7 @@ export async function getNews(
   if (filters.type) params.set('type', filters.type);
   if (filters.level) params.set('level', filters.level);
   if (filters.search) params.set('search', filters.search);
+  if (filters.country) params.set('country', filters.country);
   
   return apiRequest<NewsResponse>(`/api/news?${params.toString()}`);
 }
@@ -139,4 +144,16 @@ export async function getDashboardRadar(): Promise<RadarResponse> {
 
 export async function getDashboardTimeline(): Promise<TimelineResponse> {
   return apiRequest<TimelineResponse>('/api/dashboard/timeline');
+}
+
+// Grouped News Types (France vs International)
+export interface GroupedNewsResponse {
+  france: NewsItem[];
+  international: NewsItem[];
+  france_total: number;
+  international_total: number;
+}
+
+export async function getGroupedNews(limit: number = 10): Promise<GroupedNewsResponse> {
+  return apiRequest<GroupedNewsResponse>(`/api/dashboard/news-grouped?limit=${limit}`);
 }

@@ -78,16 +78,42 @@ class Audience(str, Enum):
 
 # RSS Sources with trust scores
 RSS_SOURCES = [
-    {"name": "CERT-FR", "url": "https://www.cert.ssi.gouv.fr/feed/", "score": 10, "lang": "fr"},
-    {"name": "CISA", "url": "https://www.cisa.gov/cybersecurity-advisories/all.xml", "score": 10, "lang": "en"},
-    {"name": "The Hacker News", "url": "https://feeds.feedburner.com/TheHackersNews", "score": 7, "lang": "en"},
-    {"name": "BleepingComputer", "url": "https://www.bleepingcomputer.com/feed/", "score": 8, "lang": "en"},
-    {"name": "Dark Reading", "url": "https://www.darkreading.com/rss.xml", "score": 7, "lang": "en"},
-    {"name": "SecurityWeek", "url": "https://feeds.feedburner.com/securityweek", "score": 7, "lang": "en"},
-    {"name": "Krebs on Security", "url": "https://krebsonsecurity.com/feed/", "score": 8, "lang": "en"},
-    {"name": "Cisco Talos", "url": "https://blog.talosintelligence.com/feeds/posts/default", "score": 9, "lang": "en"},
-    {"name": "Malwarebytes Labs", "url": "https://blog.malwarebytes.com/feed/", "score": 8, "lang": "en"},
-    {"name": "Microsoft Security", "url": "https://www.microsoft.com/en-us/security/blog/feed/", "score": 9, "lang": "en"},
+    # 🇫🇷 FRANCE - Priority 100 (highest)
+    {"name": "CERT-FR", "url": "https://www.cert.ssi.gouv.fr/feed/", "score": 10, "lang": "fr", "country": "FR", "type": "institution", "priority": 100},
+    {"name": "ANSSI", "url": "https://www.ssi.gouv.fr/feed/actualite/", "score": 10, "lang": "fr", "country": "FR", "type": "institution", "priority": 100},
+    {"name": "Cybermalveillance.gouv", "url": "https://www.cybermalveillance.gouv.fr/feed/", "score": 9, "lang": "fr", "country": "FR", "type": "institution", "priority": 95},
+    {"name": "Sekoia", "url": "https://blog.sekoia.io/feed/", "score": 8, "lang": "fr", "country": "FR", "type": "company", "priority": 80},
+    {"name": "Global Security Mag", "url": "https://www.globalsecuritymag.fr/spip.php?page=backend", "score": 7, "lang": "fr", "country": "FR", "type": "media", "priority": 70},
+    {"name": "Le Monde Informatique", "url": "https://www.lemondeinformatique.fr/flux-rss/thematique/securite/rss.xml", "score": 7, "lang": "fr", "country": "FR", "type": "media", "priority": 70},
+    
+    # 🇺🇸 USA / International - Priority 50
+    {"name": "CISA", "url": "https://www.cisa.gov/cybersecurity-advisories/all.xml", "score": 10, "lang": "en", "country": "US", "type": "institution", "priority": 50},
+    {"name": "The Hacker News", "url": "https://feeds.feedburner.com/TheHackersNews", "score": 7, "lang": "en", "country": "US", "type": "media", "priority": 40},
+    {"name": "BleepingComputer", "url": "https://www.bleepingcomputer.com/feed/", "score": 8, "lang": "en", "country": "US", "type": "media", "priority": 45},
+    {"name": "Dark Reading", "url": "https://www.darkreading.com/rss.xml", "score": 7, "lang": "en", "country": "US", "type": "media", "priority": 40},
+    {"name": "SecurityWeek", "url": "https://feeds.feedburner.com/securityweek", "score": 7, "lang": "en", "country": "US", "type": "media", "priority": 40},
+    {"name": "Krebs on Security", "url": "https://krebsonsecurity.com/feed/", "score": 8, "lang": "en", "country": "US", "type": "independent", "priority": 45},
+    {"name": "Cisco Talos", "url": "https://blog.talosintelligence.com/feeds/posts/default", "score": 9, "lang": "en", "country": "US", "type": "company", "priority": 48},
+    {"name": "Malwarebytes Labs", "url": "https://blog.malwarebytes.com/feed/", "score": 8, "lang": "en", "country": "US", "type": "company", "priority": 45},
+    {"name": "Microsoft Security", "url": "https://www.microsoft.com/en-us/security/blog/feed/", "score": 9, "lang": "en", "country": "US", "type": "company", "priority": 48},
+]
+
+# Source country lookup
+SOURCE_COUNTRIES = {source["name"]: source["country"] for source in RSS_SOURCES}
+SOURCE_PRIORITIES = {source["name"]: source["priority"] for source in RSS_SOURCES}
+
+# French Cybersecurity Ecosystem Organizations
+FRENCH_CYBER_ECOSYSTEM = [
+    {"id": "cert-fr", "name": "CERT-FR", "type": "Institution", "url": "https://www.cert.ssi.gouv.fr/", "description": "Centre gouvernemental de veille et d'alerte"},
+    {"id": "anssi", "name": "ANSSI", "type": "Institution", "url": "https://www.ssi.gouv.fr/", "description": "Agence nationale de la sécurité des systèmes d'information"},
+    {"id": "cnil", "name": "CNIL", "type": "Institution", "url": "https://www.cnil.fr/", "description": "Commission nationale de l'informatique et des libertés"},
+    {"id": "cybermalveillance", "name": "Cybermalveillance.gouv", "type": "Institution", "url": "https://www.cybermalveillance.gouv.fr/", "description": "Assistance et prévention en sécurité numérique"},
+    {"id": "synacktiv", "name": "Synacktiv", "type": "Entreprise", "url": "https://www.synacktiv.com/", "description": "Offensive security et pentesting"},
+    {"id": "sekoia", "name": "Sekoia", "type": "Entreprise", "url": "https://www.sekoia.io/", "description": "Threat Intelligence et XDR"},
+    {"id": "yeswehack", "name": "YesWeHack", "type": "Entreprise", "url": "https://www.yeswehack.com/", "description": "Bug Bounty européen"},
+    {"id": "stormshield", "name": "Stormshield", "type": "Entreprise", "url": "https://www.stormshield.com/", "description": "Solutions de cybersécurité souveraines"},
+    {"id": "orange-cyber", "name": "Orange Cyberdefense", "type": "Entreprise", "url": "https://www.orangecyberdefense.com/", "description": "Services de cybersécurité managés"},
+    {"id": "advens", "name": "Advens", "type": "Entreprise", "url": "https://www.advens.fr/", "description": "SOC et services de sécurité"},
 ]
 
 # Pydantic Models
@@ -108,6 +134,9 @@ class NewsArticle(BaseModel):
     actions: List[str] = []
     content: str = ""
     url_hash: str = ""
+    country: str = "US"  # FR or US
+    language: str = "en"  # fr or en
+    priority: int = 50
 
 class NewsResponse(BaseModel):
     items: List[NewsArticle]
@@ -326,7 +355,10 @@ class RSSFetcherService:
                     "content": content,
                     "published_at": pub_date,
                     "source": source["name"],
-                    "source_score": source["score"]
+                    "source_score": source["score"],
+                    "country": source.get("country", "US"),
+                    "language": source.get("lang", "en"),
+                    "priority": source.get("priority", 50)
                 })
             
             logger.info(f"Fetched {len(articles)} articles from {source['name']}")
@@ -385,7 +417,10 @@ class RSSFetcherService:
             impact=impact,
             actions=actions,
             content=raw_article["content"][:1000],
-            url_hash=self.url_hash(raw_article["url"])
+            url_hash=self.url_hash(raw_article["url"]),
+            country=raw_article.get("country", "US"),
+            language=raw_article.get("language", "en"),
+            priority=raw_article.get("priority", 50)
         )
     
     async def run_ingestion(self):
@@ -488,6 +523,34 @@ db = None
 rss_service = None
 scheduler = None
 
+async def migrate_country_data(database):
+    """Migrate existing articles to add country data based on source name"""
+    logger.info("Starting country data migration...")
+    
+    # Map sources to their country data
+    source_to_country = {s["name"]: {"country": s["country"], "priority": s["priority"], "language": s.get("lang", "en")} for s in RSS_SOURCES}
+    
+    # Force update all articles based on their source - even if country already exists
+    # This ensures French sources are correctly tagged
+    updated_total = 0
+    for source_name, data in source_to_country.items():
+        # Update all articles from this source, even if country is already set
+        result = await database.news.update_many(
+            {"source": source_name, "$or": [
+                {"country": {"$ne": data["country"]}},
+                {"priority": {"$ne": data["priority"]}}
+            ]},
+            {"$set": {"country": data["country"], "priority": data["priority"], "language": data["language"]}}
+        )
+        if result.modified_count > 0:
+            logger.info(f"Updated {result.modified_count} articles from {source_name} to country={data['country']}, priority={data['priority']}")
+            updated_total += result.modified_count
+    
+    if updated_total == 0:
+        logger.info("All articles already have correct country data")
+    else:
+        logger.info(f"Country data migration completed: {updated_total} articles updated")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global client, db, rss_service, scheduler
@@ -502,6 +565,11 @@ async def lifespan(app: FastAPI):
     await db.news.create_index([("url_hash", 1)], unique=True)
     await db.news.create_index([("severity", 1)])
     await db.news.create_index([("threat_type", 1)])
+    await db.news.create_index([("country", 1)])
+    await db.news.create_index([("priority", -1), ("published_at", -1)])
+    
+    # Update existing articles with country data based on source
+    await migrate_country_data(db)
     
     # Setup scheduler
     scheduler = AsyncIOScheduler()
@@ -558,6 +626,7 @@ async def get_news(
     threat_type: Optional[str] = Query(None, alias="type"),
     level: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    country: Optional[str] = Query(None, description="Filter by country code (FR, US, etc.)"),
 ):
     """Get paginated news articles with filters"""
     
@@ -570,6 +639,8 @@ async def get_news(
         filter_query["threat_type"] = threat_type
     if level:
         filter_query["level"] = level
+    if country:
+        filter_query["country"] = country.upper()
     if search:
         filter_query["$or"] = [
             {"title": {"$regex": search, "$options": "i"}},
@@ -582,8 +653,8 @@ async def get_news(
     # Pagination
     skip = (page - 1) * page_size
     
-    # Fetch articles
-    cursor = db.news.find(filter_query).sort("published_at", -1).skip(skip).limit(page_size)
+    # Fetch articles - sort by priority (France first) then by date
+    cursor = db.news.find(filter_query).sort([("priority", -1), ("published_at", -1)]).skip(skip).limit(page_size)
     articles = await cursor.to_list(page_size)
     
     # Convert to response
@@ -937,6 +1008,35 @@ async def get_dashboard_radar():
     
     return RadarResponse(categories=categories)
 
+class GroupedNewsResponse(BaseModel):
+    france: List[NewsArticle]
+    international: List[NewsArticle]
+    france_total: int
+    international_total: int
+
+@dashboard_router.get("/news-grouped", response_model=GroupedNewsResponse)
+async def get_news_grouped(
+    limit: int = Query(10, ge=1, le=50, description="Max items per group")
+):
+    """Get news grouped by country (France vs International)"""
+    
+    # Fetch French news (FR country)
+    france_cursor = db.news.find({"country": "FR"}).sort([("priority", -1), ("published_at", -1)]).limit(limit)
+    france_articles = await france_cursor.to_list(length=limit)
+    france_total = await db.news.count_documents({"country": "FR"})
+    
+    # Fetch International news (non-FR country)
+    international_cursor = db.news.find({"country": {"$ne": "FR"}}).sort([("priority", -1), ("published_at", -1)]).limit(limit)
+    international_articles = await international_cursor.to_list(length=limit)
+    international_total = await db.news.count_documents({"country": {"$ne": "FR"}})
+    
+    return GroupedNewsResponse(
+        france=[NewsArticle(**article) for article in france_articles],
+        international=[NewsArticle(**article) for article in international_articles],
+        france_total=france_total,
+        international_total=international_total
+    )
+
 @dashboard_router.get("/timeline", response_model=TimelineResponse)
 async def get_dashboard_timeline():
     """Get recent threat timeline events"""
@@ -984,6 +1084,27 @@ async def get_dashboard_timeline():
     
     return TimelineResponse(events=events)
 
+@dashboard_router.post("/migrate-countries")
+async def force_migrate_countries():
+    """Force migration of country data for all articles"""
+    logger.info("Force country migration requested via API")
+    
+    # Map sources to their country data
+    source_to_country = {s["name"]: {"country": s["country"], "priority": s["priority"], "language": s.get("lang", "en")} for s in RSS_SOURCES}
+    
+    results = {}
+    for source_name, data in source_to_country.items():
+        result = await db.news.update_many(
+            {"source": source_name},
+            {"$set": {"country": data["country"], "priority": data["priority"], "language": data["language"]}}
+        )
+        if result.modified_count > 0 or result.matched_count > 0:
+            results[source_name] = {"matched": result.matched_count, "updated": result.modified_count, "country": data["country"], "priority": data["priority"]}
+            if result.modified_count > 0:
+                logger.info(f"Force updated {result.modified_count} articles from {source_name}")
+    
+    return {"message": "Migration complete", "results": results}
+
 app.include_router(dashboard_router)
 
 # ============== LEGACY API ROUTES ==============
@@ -998,8 +1119,9 @@ async def get_news_legacy(
     threat_type: Optional[str] = Query(None, alias="type"),
     level: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    country: Optional[str] = Query(None, description="Filter by country code (FR, US, etc.)"),
 ):
-    return await get_news(page, page_size, severity, threat_type, level, search)
+    return await get_news(page, page_size, severity, threat_type, level, search, country)
 
 @legacy_router.get("/news/tension")
 async def get_tension_legacy():
@@ -1013,7 +1135,48 @@ async def get_news_detail_legacy(news_id: str):
 async def get_ai_summary_legacy(request: AISummaryRequest):
     return await get_ai_summary(request)
 
+@legacy_router.post("/admin/migrate-countries")
+async def force_migrate_countries():
+    """Force migration of country data for all articles"""
+    logger.info("Force country migration requested via API")
+    
+    # Map sources to their country data
+    source_to_country = {s["name"]: {"country": s["country"], "priority": s["priority"], "language": s.get("lang", "en")} for s in RSS_SOURCES}
+    
+    results = {}
+    for source_name, data in source_to_country.items():
+        result = await db.news.update_many(
+            {"source": source_name},
+            {"$set": {"country": data["country"], "priority": data["priority"], "language": data["language"]}}
+        )
+        if result.modified_count > 0:
+            results[source_name] = {"updated": result.modified_count, "country": data["country"], "priority": data["priority"]}
+            logger.info(f"Force updated {result.modified_count} articles from {source_name}")
+    
+    return {"message": "Migration complete", "results": results}
+
 app.include_router(legacy_router)
+
+@app.post("/api/admin/migrate-countries")
+async def force_migrate_countries_direct():
+    """Force migration of country data for all articles"""
+    logger.info("Force country migration requested via API")
+    
+    # Map sources to their country data
+    source_to_country = {s["name"]: {"country": s["country"], "priority": s["priority"], "language": s.get("lang", "en")} for s in RSS_SOURCES}
+    
+    results = {}
+    for source_name, data in source_to_country.items():
+        result = await db.news.update_many(
+            {"source": source_name},
+            {"$set": {"country": data["country"], "priority": data["priority"], "language": data["language"]}}
+        )
+        if result.modified_count > 0 or result.matched_count > 0:
+            results[source_name] = {"matched": result.matched_count, "updated": result.modified_count, "country": data["country"], "priority": data["priority"]}
+            if result.modified_count > 0:
+                logger.info(f"Force updated {result.modified_count} articles from {source_name}")
+    
+    return {"message": "Migration complete", "results": results}
 
 # CORS
 app.add_middleware(

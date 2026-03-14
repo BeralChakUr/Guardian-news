@@ -16,7 +16,7 @@ from pymongo import MongoClient
 import os
 
 # Test Configuration
-API_BASE_URL = "https://ai-threat-news.preview.emergentagent.com"
+API_BASE_URL = "https://france-cyber-intel.preview.emergentagent.com"
 MONGO_URL = "mongodb://localhost:27017"
 DB_NAME = "test_database"
 

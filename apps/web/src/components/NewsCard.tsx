@@ -21,6 +21,15 @@ const severityLabels: Record<string, string> = {
   faible: 'Faible',
 };
 
+// Country flag mapping
+const countryFlags: Record<string, string> = {
+  FR: '🇫🇷',
+  US: '🇺🇸',
+  GB: '🇬🇧',
+  DE: '🇩🇪',
+  EU: '🇪🇺',
+};
+
 export default function NewsCard({ news }: NewsCardProps) {
   const { favorites, readLater, addFavorite, removeFavorite, addReadLater, removeReadLater } = useAppStore();
   
@@ -40,12 +49,14 @@ export default function NewsCard({ news }: NewsCardProps) {
   // Get severity style safely
   const severityStyle = severityStyles[news.severity] || severityStyles.faible;
   const severityLabel = severityLabels[news.severity] || news.severity;
+  const countryFlag = countryFlags[news.country || 'US'] || '🌍';
 
   return (
     <article className="group rounded-2xl border border-gray-800 bg-cyber-surface p-5 transition-all hover:border-cyber-primary/50 hover:bg-cyber-elevated">
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
+          <span className="text-base" title={news.country === 'FR' ? 'France' : 'International'}>{countryFlag}</span>
           <span className="text-sm font-medium text-cyber-secondary">{news.source}</span>
           <span className="text-cyber-secondary">•</span>
           <span className="text-sm text-gray-500">
