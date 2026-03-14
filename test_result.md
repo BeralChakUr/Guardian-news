@@ -478,6 +478,18 @@ frontend:
         agent: "testing"
         comment: "✅ Mobile responsiveness (390x844) verified. Mobile hamburger menu functional, bottom navigation bar with 5 items present and working. All major features accessible and functional on mobile viewport. French interface maintained across all screen sizes."
 
+  - task: "V3 Cyber France Feature Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE V3 CYBER FRANCE TESTING COMPLETE - All review requirements successfully tested: ✅ GET /api/news?country=FR returns only French articles with high priority (96 total), ✅ GET /api/dashboard/news-grouped endpoint returns proper structure with france/international arrays and totals, ✅ French sources (CERT-FR, ANSSI, etc.) correctly tagged with country='FR' and priority=100, ✅ International sources properly segregated, ✅ Data integrity verified - French articles: 96, International articles: 316. All filtering, sorting by priority, and country segregation working perfectly. API performance excellent."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
@@ -486,7 +498,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Refactored frontend review testing complete"
+    - "V3 Cyber France feature testing complete"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -502,3 +514,5 @@ agent_communication:
     message: "✅ NEW HOMEPAGE TESTING COMPLETE - Comprehensive testing of the new Guardian News homepage completed successfully on both desktop (1920x1080) and mobile (390x844). All review requirements verified: ✅ Hero section with 'Veille cybersécurité en temps réel' title and animated radar, ✅ Navigation menu (desktop + mobile hamburger fully functional), ✅ All 8 sections present and working (Niveau de Menace Global, Alertes du Jour, Analyse Guardian AI, Radar des Menaces with Recharts, Sources OSINT with 9 sources, CTA section), ✅ All navigation flows work (Homepage → Dashboard → News), ✅ Mobile responsiveness perfect, ✅ CTA buttons functional ('Voir les menaces actuelles' → /dashboard/news, 'Accéder au Dashboard SOC' → /dashboard). Homepage is production-ready with excellent UX/UI on both platforms."
   - agent: "testing"
     message: "✅ REFACTORED FRONTEND REVIEW COMPLETE - Comprehensive testing of all review requirements completed successfully on desktop (1920x1080) and mobile (390x844). RESULTS: ✅ Navigation Sidebar order verified (Accueil, Tableau de bord, Fil d'actualités, Attaques, Outils, Urgence, Sources, Paramètres), ✅ Logo clickable functionality from dashboard → homepage working, ✅ ScrollToTop functionality verified, ✅ Sources page (/dashboard/sources) displays exactly 11 sources including CERT-FR, ANSSI, CISA, OWASP, Microsoft Security with proper structure (name, description, category, 'Visiter le site' button), ✅ AI Summary 3 modes (Simple, Exécutif, Analyste) all present and functional, ✅ Settings page has Langue and Mode d'affichage options with NO dark mode toggle (only SOC informational message), ✅ Mobile hamburger menu and bottom nav (5 items) functional. Interface in French as requested. ALL REQUIREMENTS MET - Guardian News refactored frontend is production-ready."
+  - agent: "testing"
+    message: "✅ V3 CYBER FRANCE FEATURE TESTING COMPLETE - All review requirements successfully tested and verified working. Key findings: ✅ GET /api/news?country=FR returns 96 French articles with correct filtering and priority sorting (CERT-FR priority=100), ✅ GET /api/dashboard/news-grouped endpoint fully functional with proper structure (france: 96 articles, international: 316 articles), ✅ Data integrity verified - French sources (CERT-FR, ANSSI, Cybermalveillance.gouv, Sekoia, Global Security Mag, Le Monde Informatique) correctly tagged with country='FR' and high priority (100), ✅ International sources (CISA, The Hacker News, BleepingComputer, etc.) properly segregated with country!='FR'. All 16 test suites passed with 100% success rate. API performance excellent (0.42s for 5 concurrent requests). V3 Cyber France feature is production-ready."

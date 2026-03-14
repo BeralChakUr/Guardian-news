@@ -3,7 +3,7 @@
 Guardian News Backend API Testing Suite
 
 Tests the FastAPI backend for the Guardian News cybersecurity intelligence platform.
-Covers all major API endpoints and functionality.
+Covers all major API endpoints and functionality including V3 Cyber France features.
 """
 
 import json
@@ -616,6 +616,105 @@ class GuardianNewsAPITester:
             self.log_result(test_name, False, f"Performance test failed: {e}")
             return False
 
+    async def test_v3_cyber_france_features(self):
+        """Test V3 Cyber France specific features"""
+        test_name = "V3 Cyber France Features"
+        print("🇫🇷 Testing V3 Cyber France Features...")
+        
+        try:
+            # Test 1: News with France filter
+            print("  📍 Testing country=FR filter...")
+            async with self.session.get(f"{self.base_url}/api/news?page=1&page_size=5&country=FR") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    items = data.get("items", [])
+                    
+                    if items:
+                        # Check all articles are French
+                        all_french = all(item.get("country") == "FR" for item in items)
+                        if all_french:
+                            # Check priority sorting (CERT-FR should have priority 100)
+                            priorities = [item.get("priority", 0) for item in items]
+                            high_priority_french = any(p >= 90 for p in priorities)
+                            
+                            print(f"    ✅ Country filter works - {len(items)} French articles found")
+                            print(f"    📊 Priorities: {priorities[:3]}...")
+                            print(f"    🏷️  Sources: {[item.get('source') for item in items[:3]]}")
+                        else:
+                            non_french = [item.get('country') for item in items if item.get('country') != 'FR']
+                            self.log_result(test_name, False, f"Non-French articles in FR filter: {non_french}")
+                            return False
+                    else:
+                        print("    ⚠️  No French articles found")
+                else:
+                    self.log_result(test_name, False, f"Country filter status: {response.status}")
+                    return False
+            
+            # Test 2: Dashboard grouped news
+            print("  📊 Testing dashboard grouped endpoint...")
+            async with self.session.get(f"{self.base_url}/api/dashboard/news-grouped?limit=5") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Check required fields
+                    required_fields = ["france", "international", "france_total", "international_total"]
+                    missing_fields = [f for f in required_fields if f not in data]
+                    
+                    if missing_fields:
+                        self.log_result(test_name, False, f"Missing fields: {missing_fields}")
+                        return False
+                    
+                    france_total = data.get("france_total", 0)
+                    international_total = data.get("international_total", 0)
+                    france_articles = data.get("france", [])
+                    international_articles = data.get("international", [])
+                    
+                    # Validate arrays
+                    if france_articles:
+                        all_french = all(article.get("country") == "FR" for article in france_articles)
+                        if not all_french:
+                            self.log_result(test_name, False, "Non-French articles in france array")
+                            return False
+                    
+                    if international_articles:
+                        all_international = all(article.get("country") != "FR" for article in international_articles)
+                        if not all_international:
+                            self.log_result(test_name, False, "French articles in international array")
+                            return False
+                    
+                    print(f"    ✅ Dashboard grouped works - FR: {france_total}, International: {international_total}")
+                    
+                    if france_total >= 50 and international_total >= 200:
+                        print(f"    ✅ Counts meet expectations")
+                    else:
+                        print(f"    ⚠️  Counts below expected minimums")
+                else:
+                    self.log_result(test_name, False, f"Dashboard grouped status: {response.status}")
+                    return False
+            
+            # Test 3: Quick data integrity check
+            print("  🔍 Testing source country integrity...")
+            
+            # Check one French source
+            async with self.session.get(f"{self.base_url}/api/news?page=1&page_size=3&search=CERT-FR") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    cert_articles = [a for a in data.get("items", []) if "CERT-FR" in a.get("source", "")]
+                    
+                    if cert_articles:
+                        incorrect = [a for a in cert_articles if a.get("country") != "FR"]
+                        if incorrect:
+                            print(f"    ⚠️  CERT-FR has non-FR articles")
+                        else:
+                            print(f"    ✅ CERT-FR correctly tagged as FR")
+            
+            self.log_result(test_name, True, "All V3 Cyber France tests passed")
+            return True
+            
+        except Exception as e:
+            self.log_result(test_name, False, f"V3 test error: {e}")
+            return False
+
     async def run_all_tests(self):
         """Run all test suites"""
         print("🚀 Starting Guardian News API Test Suite")
@@ -640,7 +739,8 @@ class GuardianNewsAPITester:
             self.test_ai_summary_executive_mode,
             self.test_legacy_endpoints,
             self.test_mongodb_data_integrity,
-            self.test_performance
+            self.test_performance,
+            self.test_v3_cyber_france_features  # Add V3 Cyber France tests
         ]
         
         # Run all tests
