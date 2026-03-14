@@ -490,6 +490,18 @@ frontend:
         agent: "testing"
         comment: "✅ COMPREHENSIVE V3 CYBER FRANCE TESTING COMPLETE - All review requirements successfully tested: ✅ GET /api/news?country=FR returns only French articles with high priority (96 total), ✅ GET /api/dashboard/news-grouped endpoint returns proper structure with france/international arrays and totals, ✅ French sources (CERT-FR, ANSSI, etc.) correctly tagged with country='FR' and priority=100, ✅ International sources properly segregated, ✅ Data integrity verified - French articles: 96, International articles: 316. All filtering, sorting by priority, and country segregation working perfectly. API performance excellent."
 
+  - task: "V3 Cyber France Frontend Feature Testing"
+    implemented: true
+    working: true
+    file: "/app/apps/web/src/pages/HomePage.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ V3 CYBER FRANCE FRONTEND TESTING COMPLETE - All requested features successfully tested on mobile iPhone 14 (390x844): ✅ Homepage DailyAlerts section displays TWO sections 'Alertes France 🇫🇷' and 'Alertes Internationales' with French alerts appearing first, ✅ Country flags visible on news cards (🇫🇷 for French articles, international flags for others), ✅ News page (/dashboard/news) ActusPage has 'Vue groupée'/'Vue liste' toggle buttons working correctly, ✅ Grouped view shows separate sections for French and International alerts, ✅ Country filter buttons present (🌍 Tous les pays, 🇫🇷 France, 🌐 International), ✅ France filter correctly shows only French news articles with 🇫🇷 flags, ✅ Mobile responsiveness excellent on all tested features. Minor issue: duplicate filter elements in mobile view but functionality not affected. V3 Cyber France feature is production-ready for mobile."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
@@ -516,3 +528,5 @@ agent_communication:
     message: "✅ REFACTORED FRONTEND REVIEW COMPLETE - Comprehensive testing of all review requirements completed successfully on desktop (1920x1080) and mobile (390x844). RESULTS: ✅ Navigation Sidebar order verified (Accueil, Tableau de bord, Fil d'actualités, Attaques, Outils, Urgence, Sources, Paramètres), ✅ Logo clickable functionality from dashboard → homepage working, ✅ ScrollToTop functionality verified, ✅ Sources page (/dashboard/sources) displays exactly 11 sources including CERT-FR, ANSSI, CISA, OWASP, Microsoft Security with proper structure (name, description, category, 'Visiter le site' button), ✅ AI Summary 3 modes (Simple, Exécutif, Analyste) all present and functional, ✅ Settings page has Langue and Mode d'affichage options with NO dark mode toggle (only SOC informational message), ✅ Mobile hamburger menu and bottom nav (5 items) functional. Interface in French as requested. ALL REQUIREMENTS MET - Guardian News refactored frontend is production-ready."
   - agent: "testing"
     message: "✅ V3 CYBER FRANCE FEATURE TESTING COMPLETE - All review requirements successfully tested and verified working. Key findings: ✅ GET /api/news?country=FR returns 96 French articles with correct filtering and priority sorting (CERT-FR priority=100), ✅ GET /api/dashboard/news-grouped endpoint fully functional with proper structure (france: 96 articles, international: 316 articles), ✅ Data integrity verified - French sources (CERT-FR, ANSSI, Cybermalveillance.gouv, Sekoia, Global Security Mag, Le Monde Informatique) correctly tagged with country='FR' and high priority (100), ✅ International sources (CISA, The Hacker News, BleepingComputer, etc.) properly segregated with country!='FR'. All 16 test suites passed with 100% success rate. API performance excellent (0.42s for 5 concurrent requests). V3 Cyber France feature is production-ready."
+  - agent: "testing"
+    message: "✅ V3 CYBER FRANCE FRONTEND TESTING COMPLETE - All review requirements successfully tested on mobile iPhone 14 (390x844). Results: ✅ Homepage DailyAlerts section displays TWO sections 'Alertes France 🇫🇷' and 'Alertes Internationales' with French alerts appearing first, ✅ Country flags visible on news cards (🇫🇷 for French articles, 🌍 for international), ✅ News page /dashboard/news with 'Vue groupée'/'Vue liste' toggle buttons functional, ✅ Grouped view shows separate sections for French and International alerts, ✅ Country filter buttons working (🌍 Tous les pays, 🇫🇷 France, 🌐 International), ✅ France filter correctly shows only French news with 🇫🇷 flags, ✅ Mobile responsiveness excellent. Minor issue: duplicate filter elements in mobile view but functionality not affected. V3 Cyber France frontend feature is production-ready for mobile devices."
