@@ -1,22 +1,24 @@
 # Guardian News - Plateforme OSINT Cybersécurité
 
 ## Vue d'ensemble
-Guardian News est une plateforme d'intelligence cybersécurité qui agrège les flux RSS des principales agences de sécurité mondiales et génère des analyses automatisées.
+Guardian News est une plateforme d'intelligence cybersécurité qui agrège les flux RSS des principales agences de sécurité mondiales et génère des analyses automatisées. **Version 3 met l'accent sur l'écosystème français de cybersécurité.**
 
 ## Architecture
 
 ### Backend (FastAPI + MongoDB)
 - **Déploiement**: Render
 - **Base de données**: MongoDB Atlas
+- **Configuration sources**: `backend/config/sources.json` - métadonnées des flux RSS avec `country`, `priority`, `language`
 - **Endpoints API**:
   - `GET /health` - Healthcheck
-  - `GET /api/news` - Liste des actualités
+  - `GET /api/news` - Liste des actualités (supporte `?country=FR` pour filtrer)
   - `GET /api/news/{id}` - Détail d'un article
   - `GET /api/news/tension` - Niveau de menace
   - `POST /api/news/ai-summary` - Résumé IA
   - `GET /api/dashboard/metrics` - Métriques dashboard
   - `GET /api/dashboard/radar` - Données radar
   - `GET /api/dashboard/timeline` - Timeline événements
+  - `GET /api/dashboard/news-grouped` - **NOUVEAU** News groupées France/International
 
 ### Frontend (React + Vite + Tailwind)
 - **Déploiement**: Vercel
@@ -24,11 +26,25 @@ Guardian News est une plateforme d'intelligence cybersécurité qui agrège les 
 
 ## Fonctionnalités Implémentées ✅
 
+### V3 Cyber France (14 mars 2026) 🇫🇷
+- [x] **Backend**:
+  - [x] Fichier de configuration `sources.json` avec métadonnées pays/priorité/langue
+  - [x] Pipeline d'ingestion RSS tague les articles avec `country`, `priority`, `language`
+  - [x] Endpoint `/api/news` supporte le paramètre `?country=FR`
+  - [x] Nouvel endpoint `/api/dashboard/news-grouped` (france/international)
+  - [x] Migration automatique des données existantes
+  - [x] Tri par priorité (sources françaises en premier)
+- [x] **Frontend**:
+  - [x] `DailyAlerts.tsx` - Sections séparées "Alertes France 🇫🇷" et "Alertes Internationales 🌍"
+  - [x] `NewsCard.tsx` - Badge drapeau pays (🇫🇷, 🇺🇸, etc.)
+  - [x] `ActusPage.tsx` - Vue groupée/liste avec filtres par pays
+  - [x] Responsive mobile
+
 ### Homepage (/)
 - [x] Hero section avec radar animé (Framer Motion)
 - [x] Navigation responsive (Accueil, Dashboard, Actualités, Paramètres)
 - [x] Niveau de Menace Global avec graphique 7 jours
-- [x] Alertes du Jour
+- [x] Alertes du Jour (France prioritaire)
 - [x] Analyse Guardian AI
 - [x] Radar des Menaces (Recharts)
 - [x] Sources OSINT Surveillées
