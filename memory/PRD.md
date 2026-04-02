@@ -41,6 +41,21 @@ Guardian News est une plateforme d'intelligence cybersécurité qui agrège les 
   - [x] Formule: `(critique*4 + élevé*3 + moyen*2 + faible*1) / total * 25`
   - [x] Basé sur 7 derniers jours
   - [x] Retourne `total_7days`, `critical_count`, `high_count`, `medium_count`, `low_count`
+- [x] **UX Attaques/Urgence**:
+  - [x] Cartes avec symptômes visibles pour reconnaissance immédiate
+  - [x] Niveau de danger affiché (🟥 Critique, 🟧 Élevé, etc.)
+  - [x] Bouton "C'est mon cas" → ouvre guide détaillé
+  - [x] Actions immédiates et contacts utiles
+- [x] **Amélioration des graphiques**:
+  - [x] Texte explicatif Radar: "Répartition des types d'attaques détectées..."
+  - [x] Texte explicatif Timeline: "Nombre total d'incidents par jour sur 7 jours"
+  - [x] Texte explicatif Niveau de menace: "Score calculé sur volume et gravité sur 7 jours"
+- [x] **Limitation biais sources** (max 30%):
+  - [x] Fonction `apply_source_bias_limit()` 
+  - [x] Aucune source ne peut dépasser 30% des articles
+- [x] **Déduplication articles**:
+  - [x] Fonction `deduplicate_articles()` avec seuil 75%
+  - [x] SequenceMatcher pour détection de titres similaires
 
 ### V3 Cyber France (14 mars 2026) 🇫🇷
 - [x] **Backend**:
