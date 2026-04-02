@@ -1,7 +1,7 @@
 # Guardian News - Plateforme OSINT Cybersécurité
 
 ## Vue d'ensemble
-Guardian News est une plateforme d'intelligence cybersécurité qui agrège les flux RSS des principales agences de sécurité mondiales et génère des analyses automatisées. **Version 3 met l'accent sur l'écosystème français de cybersécurité.**
+Guardian News est une plateforme d'intelligence cybersécurité qui agrège les flux RSS des principales agences de sécurité mondiales et génère des analyses automatisées. **Version 3 met l'accent sur l'écosystème français de cybersécurité et améliore la représentation fiable des menaces.**
 
 ## Architecture
 
@@ -11,20 +11,36 @@ Guardian News est une plateforme d'intelligence cybersécurité qui agrège les 
 - **Configuration sources**: `backend/config/sources.json` - métadonnées des flux RSS avec `country`, `priority`, `language`
 - **Endpoints API**:
   - `GET /health` - Healthcheck
-  - `GET /api/news` - Liste des actualités (supporte `?country=FR` pour filtrer)
+  - `GET /api/news` - Liste des actualités (supporte `?country=FR`, `?date_from`, `?date_to`)
   - `GET /api/news/{id}` - Détail d'un article
-  - `GET /api/news/tension` - Niveau de menace
+  - `GET /api/news/tension` - Niveau de menace (formule V3)
   - `POST /api/news/ai-summary` - Résumé IA
   - `GET /api/dashboard/metrics` - Métriques dashboard
   - `GET /api/dashboard/radar` - Données radar
   - `GET /api/dashboard/timeline` - Timeline événements
-  - `GET /api/dashboard/news-grouped` - **NOUVEAU** News groupées France/International
+  - `GET /api/dashboard/news-grouped` - News groupées France/International
 
 ### Frontend (React + Vite + Tailwind)
 - **Déploiement**: Vercel
 - **Variable d'environnement**: `VITE_API_URL`
 
 ## Fonctionnalités Implémentées ✅
+
+### V3 Correctifs Stratégiques (2 avril 2026) 🔧
+- [x] **Tri des articles** (CRITIQUE):
+  - [x] Tri global par date DESC (plus récent en premier)
+  - [x] Sources mélangées (pas de groupement par source)
+  - [x] Tri secondaire par gravité si même date
+- [x] **Filtre par date**:
+  - [x] Backend: `?date_from=YYYY-MM-DD&date_to=YYYY-MM-DD`
+  - [x] Frontend: DatePicker avec raccourcis (Aujourd'hui, 7 jours, Personnalisé)
+- [x] **UTF-8**:
+  - [x] Middleware backend pour headers `charset=utf-8`
+  - [x] Fonction `clean_utf8_text()` pour nettoyer les données
+- [x] **Calcul du niveau de menace V3**:
+  - [x] Formule: `(critique*4 + élevé*3 + moyen*2 + faible*1) / total * 25`
+  - [x] Basé sur 7 derniers jours
+  - [x] Retourne `total_7days`, `critical_count`, `high_count`, `medium_count`, `low_count`
 
 ### V3 Cyber France (14 mars 2026) 🇫🇷
 - [x] **Backend**:
@@ -33,11 +49,10 @@ Guardian News est une plateforme d'intelligence cybersécurité qui agrège les 
   - [x] Endpoint `/api/news` supporte le paramètre `?country=FR`
   - [x] Nouvel endpoint `/api/dashboard/news-grouped` (france/international)
   - [x] Migration automatique des données existantes
-  - [x] Tri par priorité (sources françaises en premier)
 - [x] **Frontend**:
   - [x] `DailyAlerts.tsx` - Sections séparées "Alertes France 🇫🇷" et "Alertes Internationales 🌍"
   - [x] `NewsCard.tsx` - Badge drapeau pays (🇫🇷, 🇺🇸, etc.)
-  - [x] `ActusPage.tsx` - Vue groupée/liste avec filtres par pays
+  - [x] `ActusPage.tsx` - Vue groupée/liste avec filtres par pays et date
   - [x] Responsive mobile
 
 ### Homepage (/)
