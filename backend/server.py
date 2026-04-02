@@ -24,6 +24,67 @@ import html
 from bs4 import BeautifulSoup
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from difflib import SequenceMatcher
+
+# Constants for anti-bias and deduplication
+MAX_SOURCE_PERCENTAGE = 0.30  # Maximum 30% of articles from a single source
+TITLE_SIMILARITY_THRESHOLD = 0.75  # Similarity threshold for duplicate detection
+
+def apply_source_bias_limit(articles: List, max_percentage: float = 0.30) -> List:
+    """
+    Limit articles from any single source to max_percentage of total.
+    This prevents any source from dominating the feed.
+    """
+    if not articles:
+        return articles
+    
+    total = len(articles)
+    max_per_source = max(1, int(total * max_percentage))
+    
+    # Count articles per source
+    source_counts = {}
+    result = []
+    
+    for article in articles:
+        source = getattr(article, 'source', None) or article.get('source', 'unknown')
+        if source not in source_counts:
+            source_counts[source] = 0
+        
+        # Only include if under the limit for this source
+        if source_counts[source] < max_per_source:
+            result.append(article)
+            source_counts[source] += 1
+    
+    return result
+
+def deduplicate_articles(articles: List, similarity_threshold: float = 0.75) -> List:
+    """
+    Remove duplicate or near-duplicate articles based on title similarity.
+    Uses SequenceMatcher for fuzzy string matching.
+    """
+    if not articles:
+        return articles
+    
+    result = []
+    seen_titles = []
+    
+    for article in articles:
+        title = getattr(article, 'title', None) or article.get('title', '')
+        title_lower = title.lower().strip()
+        
+        # Check if similar title already exists
+        is_duplicate = False
+        for seen_title in seen_titles:
+            similarity = SequenceMatcher(None, title_lower, seen_title).ratio()
+            if similarity >= similarity_threshold:
+                is_duplicate = True
+                break
+        
+        if not is_duplicate:
+            result.append(article)
+            seen_titles.append(title_lower)
+    
+    return result
 
 # UTF-8 text cleaning utilities
 def clean_utf8_text(text: str) -> str:
@@ -752,6 +813,12 @@ async def get_news(
     severity_order = {"critique": 0, "eleve": 1, "moyen": 2, "faible": 3}
     items.sort(key=lambda x: (x.published_at.date(), severity_order.get(x.severity, 4)), reverse=False)
     items.sort(key=lambda x: x.published_at, reverse=True)
+    
+    # Apply source bias limitation (max 30% from any single source)
+    items = apply_source_bias_limit(items, MAX_SOURCE_PERCENTAGE)
+    
+    # Apply deduplication (remove similar titles)
+    items = deduplicate_articles(items, TITLE_SIMILARITY_THRESHOLD)
     
     return NewsResponse(
         items=items,

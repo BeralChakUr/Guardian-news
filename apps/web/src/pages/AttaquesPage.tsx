@@ -8,14 +8,16 @@ import {
   Users,
   Wifi,
   Server,
-  ChevronDown,
-  ChevronUp,
+  ChevronRight,
   AlertTriangle,
   CheckCircle,
   Eye,
   Target,
+  HelpCircle,
+  X,
 } from 'lucide-react';
 
+// Attack types with symptoms for quick recognition
 const attacks = [
   {
     id: 'phishing',
@@ -26,6 +28,14 @@ const attacks = [
     bgColor: 'bg-blue-500/10',
     borderColor: 'border-blue-500/30',
     severity: 'eleve',
+    // Symptoms for quick recognition (V3)
+    symptoms: [
+      "Email urgent ou inhabituel",
+      "Lien suspect dans le message",
+      "Demande de mot de passe",
+      "Fautes d'orthographe"
+    ],
+    quickAction: "Ne cliquez pas, signalez immédiatement",
     definition: "Le phishing est une technique d'hameçonnage où l'attaquant se fait passer pour une entité de confiance (banque, service public, entreprise) pour voler des informations sensibles.",
     example: "Vous recevez un email de 'votre banque' vous demandant de mettre à jour vos informations. Le lien mène vers un faux site qui capture vos identifiants.",
     signs: [
@@ -58,6 +68,13 @@ const attacks = [
     bgColor: 'bg-red-500/10',
     borderColor: 'border-red-500/30',
     severity: 'critique',
+    symptoms: [
+      "Fichiers inaccessibles",
+      "Message de rançon à l'écran",
+      "Extensions de fichiers modifiées",
+      "Système très lent"
+    ],
+    quickAction: "Déconnectez du réseau, ne payez PAS",
     definition: "Un ransomware (rançongiciel) est un logiciel malveillant qui chiffre les fichiers de la victime et exige une rançon pour les déchiffrer.",
     example: "WannaCry, NotPetya, LockBit - ces ransomwares ont paralysé des hôpitaux, entreprises et administrations en chiffrant leurs données.",
     signs: [
@@ -91,6 +108,13 @@ const attacks = [
     bgColor: 'bg-purple-500/10',
     borderColor: 'border-purple-500/30',
     severity: 'eleve',
+    symptoms: [
+      "Ordinateur très lent",
+      "Pop-ups intempestifs",
+      "Programmes inconnus installés",
+      "Antivirus désactivé"
+    ],
+    quickAction: "Lancez un scan antivirus complet",
     definition: "Malware est un terme générique désignant tout logiciel conçu pour endommager, perturber ou prendre le contrôle d'un système : virus, trojans, spywares, etc.",
     example: "Un logiciel gratuit téléchargé sur un site non officiel contient un trojan qui donne un accès distant à l'attaquant.",
     signs: [
@@ -123,6 +147,13 @@ const attacks = [
     bgColor: 'bg-orange-500/10',
     borderColor: 'border-orange-500/30',
     severity: 'critique',
+    symptoms: [
+      "Email de notification d'une entreprise",
+      "Connexions suspectes sur vos comptes",
+      "Emails de phishing ciblés",
+      "Transactions bancaires inconnues"
+    ],
+    quickAction: "Changez vos mots de passe immédiatement",
     definition: "Une fuite de données survient quand des informations confidentielles sont exposées, volées ou publiées sans autorisation suite à une intrusion ou une erreur.",
     example: "Les données de millions d'utilisateurs d'un site e-commerce sont publiées sur le dark web après une intrusion dans leurs serveurs.",
     signs: [
@@ -156,6 +187,13 @@ const attacks = [
     bgColor: 'bg-yellow-500/10',
     borderColor: 'border-yellow-500/30',
     severity: 'moyen',
+    symptoms: [
+      "Appel téléphonique suspect",
+      "Demande urgente d'informations",
+      "Flatterie ou intimidation",
+      "Offre trop belle pour être vraie"
+    ],
+    quickAction: "Raccrochez et vérifiez l'identité",
     definition: "L'ingénierie sociale exploite la psychologie humaine plutôt que les failles techniques pour manipuler les victimes et obtenir des informations ou des accès.",
     example: "Un 'technicien informatique' appelle en prétendant une urgence et demande vos identifiants pour 'réparer' un problème inexistant.",
     signs: [
@@ -188,6 +226,13 @@ const attacks = [
     bgColor: 'bg-cyan-500/10',
     borderColor: 'border-cyan-500/30',
     severity: 'eleve',
+    symptoms: [
+      "Wi-Fi public non sécurisé",
+      "Certificat SSL invalide",
+      "Avertissement du navigateur",
+      "Connexion HTTPS devenue HTTP"
+    ],
+    quickAction: "Déconnectez-vous du Wi-Fi, utilisez 4G/5G",
     definition: "Une attaque MITM intercepte les communications entre deux parties pour espionner, modifier ou injecter des données dans les échanges.",
     example: "Sur un Wi-Fi public non sécurisé, un attaquant intercepte votre connexion bancaire et capture vos identifiants.",
     signs: [
@@ -220,6 +265,13 @@ const attacks = [
     bgColor: 'bg-green-500/10',
     borderColor: 'border-green-500/30',
     severity: 'moyen',
+    symptoms: [
+      "Site web inaccessible",
+      "Erreurs 503 répétées",
+      "Connexion très lente",
+      "Services en panne"
+    ],
+    quickAction: "Contactez votre hébergeur/FAI",
     definition: "Une attaque par déni de service distribué (DDoS) submerge un serveur ou réseau de requêtes pour le rendre inaccessible aux utilisateurs légitimes.",
     example: "Des milliers de machines infectées (botnet) envoient simultanément des requêtes vers un site web qui devient inaccessible.",
     signs: [
@@ -251,7 +303,14 @@ const attacks = [
     color: 'text-pink-400',
     bgColor: 'bg-pink-500/10',
     borderColor: 'border-pink-500/30',
-    severity: 'faible',
+    severity: 'eleve',
+    symptoms: [
+      "Connexions inhabituelles notifiées",
+      "Tentatives de connexion bloquées",
+      "Emails de réinitialisation non demandés",
+      "Activité suspecte sur vos comptes"
+    ],
+    quickAction: "Activez la 2FA, changez vos mots de passe",
     definition: "Le credential stuffing utilise des listes d'identifiants volés lors de fuites de données pour tenter de se connecter automatiquement à d'autres services.",
     example: "Un attaquant utilise les millions de couples email/mot de passe d'une fuite pour tester automatiquement des connexions sur Netflix, Amazon, etc.",
     signs: [
@@ -276,29 +335,130 @@ const attacks = [
   },
 ];
 
-const severityOptions = [
-  { value: 'critique', label: 'Critique', color: 'bg-red-500 text-white' },
-  { value: 'eleve', label: 'Élevé', color: 'bg-orange-500 text-white' },
-  { value: 'moyen', label: 'Moyen', color: 'bg-yellow-500 text-black' },
-  { value: 'faible', label: 'Faible', color: 'bg-green-500 text-white' },
-];
-
-const getSeverityLabel = (severity: string) => {
-  const opt = severityOptions.find(o => o.value === severity);
-  return opt ? opt.label : severity;
+const severityConfig = {
+  critique: { label: 'Critique', color: 'bg-red-500', textColor: 'text-red-400', emoji: '🟥' },
+  eleve: { label: 'Élevé', color: 'bg-orange-500', textColor: 'text-orange-400', emoji: '🟧' },
+  moyen: { label: 'Moyen', color: 'bg-yellow-500', textColor: 'text-yellow-400', emoji: '🟨' },
+  faible: { label: 'Faible', color: 'bg-green-500', textColor: 'text-green-400', emoji: '🟩' },
 };
 
-const getSeverityColor = (severity: string) => {
-  switch (severity) {
-    case 'critique': return 'text-red-400';
-    case 'eleve': return 'text-orange-400';
-    case 'moyen': return 'text-yellow-400';
-    default: return 'text-green-400';
-  }
-};
+type Attack = typeof attacks[0];
+
+// Modal for detailed guide
+function AttackDetailModal({ attack, onClose }: { attack: Attack; onClose: () => void }) {
+  const Icon = attack.icon;
+  const severity = severityConfig[attack.severity as keyof typeof severityConfig];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-cyber-surface border border-gray-700 shadow-2xl">
+        {/* Header */}
+        <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b border-gray-700 ${attack.bgColor}`}>
+          <div className="flex items-center gap-4">
+            <div className={`rounded-xl p-3 bg-white/10`}>
+              <Icon className={`h-8 w-8 ${attack.color}`} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">{attack.name}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`text-sm ${severity.textColor}`}>{severity.emoji} {severity.label}</span>
+                <span className="text-gray-500">•</span>
+                <span className="text-sm text-gray-400">{attack.category}</span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* Definition */}
+          <div>
+            <h3 className="flex items-center gap-2 font-semibold text-white mb-3">
+              <Eye className="h-5 w-5 text-cyber-primary" />
+              Qu'est-ce que c'est ?
+            </h3>
+            <p className="text-gray-300 leading-relaxed">{attack.definition}</p>
+          </div>
+
+          {/* Example */}
+          <div className={`rounded-xl p-4 ${attack.bgColor} border ${attack.borderColor}`}>
+            <h4 className="font-semibold text-white mb-2">Exemple concret</h4>
+            <p className="text-sm text-gray-300">{attack.example}</p>
+          </div>
+
+          {/* Signs */}
+          <div>
+            <h3 className="flex items-center gap-2 font-semibold text-white mb-3">
+              <AlertTriangle className="h-5 w-5 text-orange-400" />
+              Signes d'alerte détaillés
+            </h3>
+            <ul className="space-y-2">
+              {attack.signs.map((sign, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="mt-1.5 h-2 w-2 rounded-full bg-orange-400 shrink-0" />
+                  <span className="text-gray-300">{sign}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Impacts */}
+          <div>
+            <h3 className="flex items-center gap-2 font-semibold text-white mb-3">
+              <Target className="h-5 w-5 text-red-400" />
+              Impacts potentiels
+            </h3>
+            <ul className="space-y-2">
+              {attack.impacts.map((impact, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="mt-1.5 h-2 w-2 rounded-full bg-red-400 shrink-0" />
+                  <span className="text-gray-300">{impact}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Prevention */}
+          <div>
+            <h3 className="flex items-center gap-2 font-semibold text-white mb-3">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              Comment se protéger
+            </h3>
+            <ul className="space-y-3">
+              {attack.prevention.map((tip, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500/20 text-xs font-bold text-green-400">
+                    {i + 1}
+                  </span>
+                  <span className="text-gray-300">{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 p-6 border-t border-gray-700 bg-cyber-surface">
+          <button
+            onClick={onClose}
+            className="w-full py-3 rounded-xl bg-cyber-primary text-white font-semibold hover:bg-cyber-primary/80 transition-colors"
+          >
+            J'ai compris
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AttaquesPage() {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedAttack, setSelectedAttack] = useState<Attack | null>(null);
   const [filterSeverity, setFilterSeverity] = useState<string | null>(null);
 
   const filteredAttacks = filterSeverity
@@ -314,8 +474,22 @@ export default function AttaquesPage() {
           <h1 className="text-2xl font-bold text-white">Types d'Attaques</h1>
         </div>
         <p className="text-cyber-secondary">
-          Comprendre les menaces pour mieux se protéger
+          Reconnaissez rapidement les menaces pour agir immédiatement
         </p>
+      </div>
+
+      {/* Quick instruction banner */}
+      <div className="mb-6 p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/30">
+        <div className="flex items-start gap-3">
+          <HelpCircle className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-cyan-100 font-medium">Comment utiliser cette page ?</p>
+            <p className="text-sm text-cyan-200/70 mt-1">
+              Regardez les <strong>symptômes</strong> de chaque carte. Si vous les reconnaissez, 
+              cliquez sur <strong>"C'est mon cas"</strong> pour obtenir un guide détaillé.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Severity Filter */}
@@ -327,135 +501,102 @@ export default function AttaquesPage() {
               ? 'bg-cyber-primary text-white'
               : 'border border-gray-700 text-cyber-secondary hover:text-white'
           }`}
+          data-testid="filter-all"
         >
           Tous
         </button>
-        {severityOptions.map(opt => (
+        {Object.entries(severityConfig).map(([key, config]) => (
           <button
-            key={opt.value}
-            onClick={() => setFilterSeverity(filterSeverity === opt.value ? null : opt.value)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              filterSeverity === opt.value
-                ? opt.color
+            key={key}
+            onClick={() => setFilterSeverity(filterSeverity === key ? null : key)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${
+              filterSeverity === key
+                ? `${config.color} text-white`
                 : 'border border-gray-700 text-cyber-secondary hover:text-white'
             }`}
+            data-testid={`filter-${key}`}
           >
-            {opt.label}
+            <span>{config.emoji}</span>
+            {config.label}
           </button>
         ))}
       </div>
 
-      {/* Attacks List */}
-      <div className="space-y-4">
+      {/* Attack Cards - V3 UX with symptoms and "C'est mon cas" button */}
+      <div className="grid gap-4 md:grid-cols-2">
         {filteredAttacks.map(attack => {
           const Icon = attack.icon;
-          const isExpanded = expandedId === attack.id;
+          const severity = severityConfig[attack.severity as keyof typeof severityConfig];
 
           return (
             <div
               key={attack.id}
-              className={`rounded-2xl border bg-cyber-surface overflow-hidden transition-all ${attack.borderColor}`}
+              className={`rounded-2xl border bg-cyber-surface overflow-hidden transition-all hover:border-opacity-100 ${attack.borderColor}`}
+              data-testid={`attack-card-${attack.id}`}
             >
-              {/* Header */}
-              <button
-                onClick={() => setExpandedId(isExpanded ? null : attack.id)}
-                className="flex w-full items-center justify-between p-5"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`rounded-xl p-3 ${attack.bgColor}`}>
-                    <Icon className={`h-6 w-6 ${attack.color}`} />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-semibold text-white">{attack.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-cyber-secondary">{attack.category}</span>
-                      <span className="text-gray-600">•</span>
-                      <span className={`text-xs font-medium ${getSeverityColor(attack.severity)}`}>
-                        {getSeverityLabel(attack.severity)}
-                      </span>
+              {/* Card Header */}
+              <div className="p-5">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`rounded-xl p-3 ${attack.bgColor}`}>
+                      <Icon className={`h-6 w-6 ${attack.color}`} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">{attack.name}</h3>
+                      <span className="text-xs text-gray-400">{attack.category}</span>
                     </div>
                   </div>
-                </div>
-                {isExpanded ? (
-                  <ChevronUp className="h-5 w-5 text-cyber-secondary" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-cyber-secondary" />
-                )}
-              </button>
-
-              {/* Expanded Content */}
-              {isExpanded && (
-                <div className="border-t border-gray-800 p-5 space-y-6">
-                  {/* Definition */}
-                  <div>
-                    <h4 className="flex items-center gap-2 font-semibold text-white mb-2">
-                      <Eye className="h-4 w-4 text-cyber-primary" />
-                      Définition
-                    </h4>
-                    <p className="text-cyber-secondary">{attack.definition}</p>
-                  </div>
-
-                  {/* Example */}
-                  <div className={`rounded-xl p-4 ${attack.bgColor}`}>
-                    <h4 className="font-semibold text-white mb-2">Exemple concret</h4>
-                    <p className="text-sm text-cyber-secondary">{attack.example}</p>
-                  </div>
-
-                  {/* Signs */}
-                  <div>
-                    <h4 className="flex items-center gap-2 font-semibold text-white mb-3">
-                      <AlertTriangle className="h-4 w-4 text-orange-400" />
-                      Signes d'alerte
-                    </h4>
-                    <ul className="space-y-2">
-                      {attack.signs.map((sign, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-orange-400 shrink-0" />
-                          <span className="text-sm text-cyber-secondary">{sign}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Impacts */}
-                  <div>
-                    <h4 className="flex items-center gap-2 font-semibold text-white mb-3">
-                      <Target className="h-4 w-4 text-red-400" />
-                      Impacts potentiels
-                    </h4>
-                    <ul className="space-y-2">
-                      {attack.impacts.map((impact, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-red-400 shrink-0" />
-                          <span className="text-sm text-cyber-secondary">{impact}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Prevention */}
-                  <div>
-                    <h4 className="flex items-center gap-2 font-semibold text-white mb-3">
-                      <CheckCircle className="h-4 w-4 text-green-400" />
-                      Comment se protéger
-                    </h4>
-                    <ul className="space-y-2">
-                      {attack.prevention.map((tip, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-500/20 text-xs font-bold text-green-400">
-                            {i + 1}
-                          </span>
-                          <span className="text-sm text-cyber-secondary">{tip}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${attack.bgColor} ${severity.textColor}`}>
+                    {severity.emoji} {severity.label}
                   </div>
                 </div>
-              )}
+
+                {/* Symptoms - V3 UX */}
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-orange-400" />
+                    Symptômes visibles
+                  </h4>
+                  <ul className="space-y-1.5">
+                    {attack.symptoms.map((symptom, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-gray-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                        {symptom}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Quick Action */}
+                <div className={`p-3 rounded-lg ${attack.bgColor} border ${attack.borderColor} mb-4`}>
+                  <p className="text-sm">
+                    <span className="font-medium text-white">Action immédiate : </span>
+                    <span className="text-gray-300">{attack.quickAction}</span>
+                  </p>
+                </div>
+
+                {/* "C'est mon cas" button - V3 UX */}
+                <button
+                  onClick={() => setSelectedAttack(attack)}
+                  className={`w-full py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${attack.bgColor} ${attack.color} hover:opacity-80 border ${attack.borderColor}`}
+                  data-testid={`cta-${attack.id}`}
+                >
+                  C'est mon cas
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           );
         })}
       </div>
+
+      {/* Detail Modal */}
+      {selectedAttack && (
+        <AttackDetailModal
+          attack={selectedAttack}
+          onClose={() => setSelectedAttack(null)}
+        />
+      )}
     </div>
   );
 }

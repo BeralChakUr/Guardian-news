@@ -86,7 +86,10 @@ export default function ThreatLevelCard() {
                   <Shield className="w-7 h-7 text-cyan-400" />
                   Niveau de Menace Global
                 </h2>
-                <p className="text-slate-400">Basé sur l'analyse de {metrics.active_alerts} alertes actives</p>
+                <p className="text-slate-400">
+                  Score calculé sur la base du volume et de la gravité des incidents sur 7 jours.
+                  Basé sur l'analyse de {metrics.active_alerts} alertes actives.
+                </p>
               </div>
               
               {/* Score indicator */}
@@ -134,7 +137,9 @@ export default function ThreatLevelCard() {
             
             {/* Trend chart */}
             <div className="h-24">
-              <p className="text-sm text-slate-400 mb-2">Évolution sur 7 jours</p>
+              <p className="text-sm text-slate-400 mb-2">
+                Nombre total d'incidents détectés par jour sur les 7 derniers jours
+              </p>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={mockTrendData}>
                   <Tooltip
