@@ -3,5 +3,8 @@
   "private": true,
   "scripts": {
     "expo": "./expo"
+  },
+  "dependencies": {
+    "expo": "54.0.33"
   }
 }

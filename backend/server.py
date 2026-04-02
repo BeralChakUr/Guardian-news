@@ -1,7 +1,10 @@
 from fastapi import FastAPI, APIRouter, Query, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
+from fastapi.middleware.gzip import GZipMiddleware
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 from motor.motor_asyncio import AsyncIOMotorClient
 from contextlib import asynccontextmanager
 import os
@@ -17,9 +20,33 @@ import httpx
 import asyncio
 import hashlib
 import re
+import html
 from bs4 import BeautifulSoup
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+
+# UTF-8 text cleaning utilities
+def clean_utf8_text(text: str) -> str:
+    """Clean and normalize UTF-8 text to fix encoding issues"""
+    if not text:
+        return ""
+    try:
+        # Decode HTML entities
+        text = html.unescape(text)
+        # Fix common encoding issues (mojibake)
+        try:
+            # Try to fix double-encoded UTF-8
+            text = text.encode('latin1').decode('utf-8')
+        except (UnicodeDecodeError, UnicodeEncodeError):
+            pass
+        # Normalize unicode characters
+        import unicodedata
+        text = unicodedata.normalize('NFC', text)
+        # Remove null bytes and control characters
+        text = ''.join(char for char in text if ord(char) >= 32 or char in '\n\r\t')
+        return text.strip()
+    except Exception:
+        return text
 
 # Optional AI integration - gracefully handle if not available
 try:
@@ -151,6 +178,9 @@ class TensionResponse(BaseModel):
     reason: str
     critical_count: int
     high_count: int
+    medium_count: int = 0
+    low_count: int = 0
+    total_7days: int = 0
     recent_threats: List[str]
     updated_at: datetime
 
@@ -330,13 +360,16 @@ class RSSFetcherService:
         try:
             client = await self.get_client()
             response = await client.get(source["url"])
-            feed = feedparser.parse(response.text)
+            
+            # Ensure proper encoding for feed parsing
+            content = response.text
+            feed = feedparser.parse(content)
             
             articles = []
             for entry in feed.entries[:20]:  # Limit per source
-                title = entry.get("title", "")
+                title = clean_utf8_text(entry.get("title", ""))
                 link = entry.get("link", "")
-                content = entry.get("summary", "") or entry.get("description", "")
+                content = clean_utf8_text(entry.get("summary", "") or entry.get("description", ""))
                 
                 # Parse published date
                 published = entry.get("published_parsed") or entry.get("updated_parsed")
@@ -459,40 +492,59 @@ class RSSFetcherService:
         return saved_count
     
     async def update_tension(self):
-        """Calculate and update cyber tension index"""
+        """Calculate and update cyber tension index based on 7-day data"""
         now = datetime.utcnow()
-        last_24h = now - timedelta(hours=24)
-        last_48h = now - timedelta(hours=48)
+        seven_days_ago = now - timedelta(days=7)
         
-        # Count by severity in last 24h
+        # Count incidents by severity over the last 7 days
         critical_count = await self.db.news.count_documents({
-            "published_at": {"$gte": last_24h},
+            "published_at": {"$gte": seven_days_ago},
             "severity": "critique"
         })
         
         high_count = await self.db.news.count_documents({
-            "published_at": {"$gte": last_24h},
+            "published_at": {"$gte": seven_days_ago},
             "severity": "eleve"
         })
         
-        # Get recent threat types
+        medium_count = await self.db.news.count_documents({
+            "published_at": {"$gte": seven_days_ago},
+            "severity": "moyen"
+        })
+        
+        low_count = await self.db.news.count_documents({
+            "published_at": {"$gte": seven_days_ago},
+            "severity": "faible"
+        })
+        
+        # Get recent threat titles
         recent = await self.db.news.find(
-            {"published_at": {"$gte": last_48h}},
+            {"published_at": {"$gte": seven_days_ago}},
             {"threat_type": 1, "title": 1}
         ).sort("published_at", -1).limit(10).to_list(10)
         
         recent_threats = [a["title"][:50] for a in recent[:5]]
         
-        # Calculate score (0-100)
-        score = min(100, critical_count * 25 + high_count * 10)
+        # Calculate weighted score using the formula:
+        # score = ((critique * 4) + (élevé * 3) + (moyen * 2) + (faible * 1)) / total * 25
+        # Then normalized to 100
+        total = critical_count + high_count + medium_count + low_count
         
-        if score >= 70:
+        if total > 0:
+            weighted_sum = (critical_count * 4) + (high_count * 3) + (medium_count * 2) + (low_count * 1)
+            raw_score = (weighted_sum / total) * 25  # Scale to 0-100 range
+            score = min(100, int(raw_score))
+        else:
+            score = 0
+        
+        # Determine level based on score
+        if score >= 70 or critical_count >= 3:
             level = "Critique"
-            reason = f"{critical_count} alertes critiques détectées"
-        elif score >= 40:
+            reason = f"{critical_count} alertes critiques et {high_count} alertes élevées sur 7 jours"
+        elif score >= 50 or critical_count >= 1:
             level = "Élevé"
-            reason = f"{high_count} menaces importantes en cours"
-        elif score >= 20:
+            reason = f"{high_count} menaces importantes détectées cette semaine"
+        elif score >= 30:
             level = "Modéré"
             reason = "Activité normale avec vigilance requise"
         else:
@@ -505,6 +557,9 @@ class RSSFetcherService:
             "reason": reason,
             "critical_count": critical_count,
             "high_count": high_count,
+            "medium_count": medium_count,
+            "low_count": low_count,
+            "total_7days": total,
             "recent_threats": recent_threats,
             "updated_at": now
         }
@@ -515,7 +570,7 @@ class RSSFetcherService:
             upsert=True
         )
         
-        logger.info(f"Tension updated: {level} (score: {score})")
+        logger.info(f"Tension updated: {level} (score: {score}, total 7d: {total})")
 
 # Global instances
 client = None
@@ -601,6 +656,18 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# UTF-8 Response Middleware
+class UTF8ResponseMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        # Ensure UTF-8 charset for JSON responses
+        content_type = response.headers.get("content-type", "")
+        if "application/json" in content_type and "charset" not in content_type:
+            response.headers["content-type"] = "application/json; charset=utf-8"
+        return response
+
+app.add_middleware(UTF8ResponseMiddleware)
+
 # ============== ROOT & HEALTH ENDPOINTS ==============
 
 @app.get("/", tags=["Health"])
@@ -627,6 +694,8 @@ async def get_news(
     level: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     country: Optional[str] = Query(None, description="Filter by country code (FR, US, etc.)"),
+    date_from: Optional[str] = Query(None, description="Filter from date (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="Filter to date (YYYY-MM-DD)"),
 ):
     """Get paginated news articles with filters"""
     
@@ -647,18 +716,42 @@ async def get_news(
             {"content": {"$regex": search, "$options": "i"}}
         ]
     
+    # Date filters
+    if date_from or date_to:
+        date_filter = {}
+        if date_from and isinstance(date_from, str):
+            try:
+                from_date = datetime.strptime(date_from, "%Y-%m-%d")
+                date_filter["$gte"] = from_date
+            except ValueError:
+                pass
+        if date_to and isinstance(date_to, str):
+            try:
+                to_date = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1)  # Include the entire day
+                date_filter["$lt"] = to_date
+            except ValueError:
+                pass
+        if date_filter:
+            filter_query["published_at"] = date_filter
+    
     # Get total count
     total = await db.news.count_documents(filter_query)
     
     # Pagination
     skip = (page - 1) * page_size
     
-    # Fetch articles - sort by priority (France first) then by date
-    cursor = db.news.find(filter_query).sort([("priority", -1), ("published_at", -1)]).skip(skip).limit(page_size)
+    # Fetch articles - sort by date DESC, then by severity (critique > eleve > moyen > faible)
+    # Severity order mapping: critique=4, eleve=3, moyen=2, faible=1
+    cursor = db.news.find(filter_query).sort([("published_at", -1)]).skip(skip).limit(page_size)
     articles = await cursor.to_list(page_size)
     
-    # Convert to response
+    # Convert to response and sort by severity if same date
     items = [NewsArticle(**article) for article in articles]
+    
+    # Secondary sort by severity (for same-date articles)
+    severity_order = {"critique": 0, "eleve": 1, "moyen": 2, "faible": 3}
+    items.sort(key=lambda x: (x.published_at.date(), severity_order.get(x.severity, 4)), reverse=False)
+    items.sort(key=lambda x: x.published_at, reverse=True)
     
     return NewsResponse(
         items=items,
@@ -691,6 +784,9 @@ async def get_tension():
         reason=tension["reason"],
         critical_count=tension["critical_count"],
         high_count=tension["high_count"],
+        medium_count=tension.get("medium_count", 0),
+        low_count=tension.get("low_count", 0),
+        total_7days=tension.get("total_7days", 0),
         recent_threats=tension["recent_threats"],
         updated_at=tension["updated_at"]
     )
@@ -1020,13 +1116,13 @@ async def get_news_grouped(
 ):
     """Get news grouped by country (France vs International)"""
     
-    # Fetch French news (FR country)
-    france_cursor = db.news.find({"country": "FR"}).sort([("priority", -1), ("published_at", -1)]).limit(limit)
+    # Fetch French news (FR country) - sorted by date DESC
+    france_cursor = db.news.find({"country": "FR"}).sort([("published_at", -1)]).limit(limit)
     france_articles = await france_cursor.to_list(length=limit)
     france_total = await db.news.count_documents({"country": "FR"})
     
-    # Fetch International news (non-FR country)
-    international_cursor = db.news.find({"country": {"$ne": "FR"}}).sort([("priority", -1), ("published_at", -1)]).limit(limit)
+    # Fetch International news (non-FR country) - sorted by date DESC
+    international_cursor = db.news.find({"country": {"$ne": "FR"}}).sort([("published_at", -1)]).limit(limit)
     international_articles = await international_cursor.to_list(length=limit)
     international_total = await db.news.count_documents({"country": {"$ne": "FR"}})
     
@@ -1120,8 +1216,10 @@ async def get_news_legacy(
     level: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     country: Optional[str] = Query(None, description="Filter by country code (FR, US, etc.)"),
+    date_from: Optional[str] = Query(None, description="Filter from date (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="Filter to date (YYYY-MM-DD)"),
 ):
-    return await get_news(page, page_size, severity, threat_type, level, search, country)
+    return await get_news(page, page_size, severity, threat_type, level, search, country, date_from, date_to)
 
 @legacy_router.get("/news/tension")
 async def get_tension_legacy():

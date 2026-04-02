@@ -16,7 +16,7 @@ from pymongo import MongoClient
 import os
 
 # Test Configuration
-API_BASE_URL = "https://france-cyber-intel.preview.emergentagent.com"
+API_BASE_URL = "http://localhost:8001"
 MONGO_URL = "mongodb://localhost:27017"
 DB_NAME = "test_database"
 
@@ -715,18 +715,194 @@ class GuardianNewsAPITester:
             self.log_result(test_name, False, f"V3 test error: {e}")
             return False
 
+    async def test_v3_strategic_fixes(self):
+        """Test V3 Strategic Fixes as per review request"""
+        test_name = "V3 Strategic Fixes"
+        print("🔧 Testing V3 Strategic Fixes...")
+        
+        try:
+            # Test 1: Article Sorting (CRITICAL)
+            print("  📅 Testing Article Sorting (CRITICAL)...")
+            async with self.session.get(f"{self.base_url}/api/news?page=1&page_size=20") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    items = data.get("items", [])
+                    
+                    if len(items) >= 2:
+                        # Check articles are sorted by date DESC (most recent first)
+                        dates = [item.get("published_at") for item in items]
+                        is_sorted_desc = all(dates[i] >= dates[i+1] for i in range(len(dates)-1))
+                        
+                        # Check multiple sources are mixed (not grouped by source)
+                        sources = [item.get("source") for item in items[:10]]
+                        unique_sources = set(sources)
+                        sources_mixed = len(unique_sources) > 1
+                        
+                        # Check no source dominates the top results
+                        source_counts = {}
+                        for source in sources[:5]:  # Top 5 results
+                            source_counts[source] = source_counts.get(source, 0) + 1
+                        max_source_count = max(source_counts.values()) if source_counts else 0
+                        no_source_dominance = max_source_count <= 3  # No source should have more than 3 of top 5
+                        
+                        print(f"    ✅ Date sorting: {is_sorted_desc}")
+                        print(f"    ✅ Sources mixed: {sources_mixed} ({len(unique_sources)} unique sources)")
+                        print(f"    ✅ No source dominance: {no_source_dominance} (max count: {max_source_count})")
+                        
+                        if not (is_sorted_desc and sources_mixed and no_source_dominance):
+                            self.log_result(test_name, False, "Article sorting criteria not met")
+                            return False
+                    else:
+                        print("    ⚠️  Not enough articles to test sorting")
+                else:
+                    self.log_result(test_name, False, f"Article sorting test failed: {response.status}")
+                    return False
+            
+            # Test 2: Date Filter
+            print("  📆 Testing Date Filter...")
+            async with self.session.get(f"{self.base_url}/api/news?page=1&page_size=10&date_from=2026-04-02&date_to=2026-04-02") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Check response includes total count
+                    if "total" not in data:
+                        self.log_result(test_name, False, "Date filter response missing total count")
+                        return False
+                    
+                    # Check only articles from specified date are returned
+                    items = data.get("items", [])
+                    if items:
+                        for item in items:
+                            pub_date = item.get("published_at", "")
+                            if not pub_date.startswith("2026-04-02"):
+                                self.log_result(test_name, False, f"Date filter failed: found article from {pub_date}")
+                                return False
+                    
+                    print(f"    ✅ Date filter works: {len(items)} articles from 2026-04-02, total: {data['total']}")
+                else:
+                    self.log_result(test_name, False, f"Date filter test failed: {response.status}")
+                    return False
+            
+            # Test 3: Threat Level Calculation (new formula)
+            print("  🎯 Testing Threat Level Calculation...")
+            async with self.session.get(f"{self.base_url}/api/news/tension") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Check required fields
+                    required_fields = ["level", "score", "reason", "critical_count", "high_count", "medium_count", "low_count", "total_7days"]
+                    missing_fields = [f for f in required_fields if f not in data]
+                    
+                    if missing_fields:
+                        self.log_result(test_name, False, f"Tension endpoint missing fields: {missing_fields}")
+                        return False
+                    
+                    # Verify score calculation formula: (critique*4 + élevé*3 + moyen*2 + faible*1) / total * 25
+                    critical = data["critical_count"]
+                    high = data["high_count"]
+                    medium = data["medium_count"]
+                    low = data["low_count"]
+                    total = data["total_7days"]
+                    
+                    if total > 0:
+                        expected_weighted = (critical * 4) + (high * 3) + (medium * 2) + (low * 1)
+                        expected_score = min(100, int((expected_weighted / total) * 25))
+                        actual_score = data["score"]
+                        
+                        score_correct = abs(actual_score - expected_score) <= 1  # Allow 1 point difference for rounding
+                        
+                        print(f"    ✅ Tension calculation: Level={data['level']}, Score={actual_score}")
+                        print(f"    📊 Counts: Critical={critical}, High={high}, Medium={medium}, Low={low}, Total={total}")
+                        print(f"    🧮 Formula check: Expected={expected_score}, Actual={actual_score}, Correct={score_correct}")
+                        
+                        if not score_correct:
+                            self.log_result(test_name, False, f"Score calculation incorrect: expected {expected_score}, got {actual_score}")
+                            return False
+                    else:
+                        print("    ⚠️  No data for score calculation verification")
+                else:
+                    self.log_result(test_name, False, f"Tension endpoint test failed: {response.status}")
+                    return False
+            
+            # Test 4: UTF-8 Headers
+            print("  🔤 Testing UTF-8 Headers...")
+            async with self.session.get(f"{self.base_url}/api/news?page=1&page_size=1") as response:
+                if response.status == 200:
+                    content_type = response.headers.get("content-type", "")
+                    has_utf8 = "charset=utf-8" in content_type.lower()
+                    
+                    print(f"    ✅ Content-Type: {content_type}")
+                    print(f"    ✅ UTF-8 charset: {has_utf8}")
+                    
+                    if not has_utf8:
+                        self.log_result(test_name, False, f"UTF-8 charset not found in Content-Type: {content_type}")
+                        return False
+                else:
+                    self.log_result(test_name, False, f"UTF-8 headers test failed: {response.status}")
+                    return False
+            
+            # Test 5: Grouped News endpoint
+            print("  🌍 Testing Grouped News endpoint...")
+            async with self.session.get(f"{self.base_url}/api/dashboard/news-grouped?limit=5") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Check required fields
+                    required_fields = ["france", "international", "france_total", "international_total"]
+                    missing_fields = [f for f in required_fields if f not in data]
+                    
+                    if missing_fields:
+                        self.log_result(test_name, False, f"Grouped news missing fields: {missing_fields}")
+                        return False
+                    
+                    france_articles = data.get("france", [])
+                    international_articles = data.get("international", [])
+                    
+                    # Check France articles are sorted by date DESC
+                    if len(france_articles) >= 2:
+                        france_dates = [article.get("published_at") for article in france_articles]
+                        france_sorted = all(france_dates[i] >= france_dates[i+1] for i in range(len(france_dates)-1))
+                        print(f"    ✅ France articles sorted by date DESC: {france_sorted}")
+                        
+                        if not france_sorted:
+                            self.log_result(test_name, False, "France articles not sorted by date DESC")
+                            return False
+                    
+                    # Check International articles are sorted by date DESC
+                    if len(international_articles) >= 2:
+                        intl_dates = [article.get("published_at") for article in international_articles]
+                        intl_sorted = all(intl_dates[i] >= intl_dates[i+1] for i in range(len(intl_dates)-1))
+                        print(f"    ✅ International articles sorted by date DESC: {intl_sorted}")
+                        
+                        if not intl_sorted:
+                            self.log_result(test_name, False, "International articles not sorted by date DESC")
+                            return False
+                    
+                    print(f"    ✅ Grouped news: France={len(france_articles)}, International={len(international_articles)}")
+                    print(f"    📊 Totals: France={data['france_total']}, International={data['international_total']}")
+                else:
+                    self.log_result(test_name, False, f"Grouped news endpoint test failed: {response.status}")
+                    return False
+            
+            self.log_result(test_name, True, "All V3 Strategic Fixes tests passed")
+            return True
+            
+        except Exception as e:
+            self.log_result(test_name, False, f"V3 Strategic Fixes test error: {e}")
+            return False
+
     async def run_all_tests(self):
         """Run all test suites"""
-        print("🚀 Starting Guardian News API Test Suite")
+        print("🚀 Starting Guardian News API Test Suite - V3 Strategic Fixes")
         print(f"📡 Testing API at: {self.base_url}")
         print("=" * 60)
         
         await self.setup()
         
-        # List of all test methods
+        # List of all test methods - focusing on V3 Strategic Fixes
         tests = [
             self.test_api_health,
-            self.test_root_endpoint,
+            self.test_v3_strategic_fixes,  # Priority test for V3 Strategic Fixes
             self.test_news_list_basic,
             self.test_news_pagination,
             self.test_news_filtering,

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
-import { Search, Filter, X, RefreshCw, ChevronDown, Sparkles, Clock, Globe } from 'lucide-react';
+import { Search, Filter, X, RefreshCw, ChevronDown, Sparkles, Clock, Globe, Calendar } from 'lucide-react';
 import { getNews, getTension, getGroupedNews, type NewsItem } from '../services/newsService';
 import NewsCard from '../components/NewsCard';
 import TensionBanner from '../components/TensionBanner';
@@ -27,6 +27,30 @@ const countryOptions = [
   { value: 'US', label: 'International', icon: '🌐' },
 ];
 
+// Date preset options
+const datePresets = [
+  { value: 'today', label: "Aujourd'hui" },
+  { value: '7days', label: '7 derniers jours' },
+  { value: 'custom', label: 'Personnalisé' },
+];
+
+// Helper to get date strings
+const getDateRange = (preset: string): { from: string; to: string } => {
+  const today = new Date();
+  const toDate = today.toISOString().split('T')[0];
+  
+  switch (preset) {
+    case 'today':
+      return { from: toDate, to: toDate };
+    case '7days':
+      const weekAgo = new Date(today);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return { from: weekAgo.toISOString().split('T')[0], to: toDate };
+    default:
+      return { from: '', to: '' };
+  }
+};
+
 export default function ActusPage() {
   const [search, setSearch] = useState('');
   const [severity, setSeverity] = useState<string | null>(null);
@@ -34,13 +58,18 @@ export default function ActusPage() {
   const [country, setCountry] = useState<string>('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grouped' | 'list'>('grouped');
+  const [datePreset, setDatePreset] = useState<string>('');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
 
   const filters = useMemo(() => ({
     severity: severity || undefined,
     type: type || undefined,
     search: search || undefined,
     country: country || undefined,
-  }), [severity, type, search, country]);
+    date_from: dateFrom || undefined,
+    date_to: dateTo || undefined,
+  }), [severity, type, search, country, dateFrom, dateTo]);
 
   const { data: tension, isLoading: tensionLoading } = useQuery({
     queryKey: ['tension'],
@@ -76,14 +105,29 @@ export default function ActusPage() {
   const news = data?.pages.flatMap(page => page.items) ?? [];
   const total = data?.pages[0]?.total ?? 0;
 
-  const hasActiveFilters = severity || type || search || country;
-  const showGroupedView = viewMode === 'grouped' && !severity && !type && !search;
+  const hasActiveFilters = severity || type || search || country || dateFrom || dateTo;
+  const showGroupedView = viewMode === 'grouped' && !severity && !type && !search && !dateFrom && !dateTo;
 
   const clearFilters = () => {
     setSeverity(null);
     setType(null);
     setSearch('');
     setCountry('');
+    setDatePreset('');
+    setDateFrom('');
+    setDateTo('');
+  };
+
+  const handleDatePresetChange = (preset: string) => {
+    setDatePreset(preset);
+    if (preset === 'custom') {
+      // Don't change dates, let user pick manually
+      return;
+    }
+    const { from, to } = getDateRange(preset);
+    setDateFrom(from);
+    setDateTo(to);
+    setViewMode('list'); // Switch to list view when filtering by date
   };
 
   const FilterSection = ({ className = '' }: { className?: string }) => (
@@ -154,6 +198,68 @@ export default function ActusPage() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Date Filter */}
+      <div>
+        <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-cyber-secondary flex items-center gap-2">
+          <Calendar className="w-4 h-4" />
+          Période
+        </h4>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {datePresets.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => handleDatePresetChange(opt.value)}
+              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
+                datePreset === opt.value
+                  ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40'
+                  : 'border-gray-700 text-cyber-secondary hover:border-gray-600 hover:text-white'
+              }`}
+              data-testid={`date-filter-${opt.value}`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {datePreset === 'custom' && (
+          <div className="space-y-2">
+            <div>
+              <label className="text-xs text-cyber-secondary mb-1 block">Du</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  setViewMode('list');
+                }}
+                className="w-full rounded-lg border border-gray-700 bg-cyber-surface px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                data-testid="date-from-input"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-cyber-secondary mb-1 block">Au</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  setViewMode('list');
+                }}
+                className="w-full rounded-lg border border-gray-700 bg-cyber-surface px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                data-testid="date-to-input"
+              />
+            </div>
+          </div>
+        )}
+        {(dateFrom || dateTo) && datePreset !== 'custom' && (
+          <p className="text-xs text-cyber-secondary mt-2">
+            {dateFrom === dateTo 
+              ? `📅 ${new Date(dateFrom).toLocaleDateString('fr-FR')}`
+              : `📅 ${new Date(dateFrom).toLocaleDateString('fr-FR')} → ${new Date(dateTo).toLocaleDateString('fr-FR')}`
+            }
+          </p>
+        )}
       </div>
 
       {/* Clear Button */}

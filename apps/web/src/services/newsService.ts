@@ -42,6 +42,8 @@ export interface NewsFilters {
   level?: string;
   search?: string;
   country?: string;
+  date_from?: string;
+  date_to?: string;
 }
 
 export async function getNews(
@@ -58,6 +60,8 @@ export async function getNews(
   if (filters.level) params.set('level', filters.level);
   if (filters.search) params.set('search', filters.search);
   if (filters.country) params.set('country', filters.country);
+  if (filters.date_from) params.set('date_from', filters.date_from);
+  if (filters.date_to) params.set('date_to', filters.date_to);
   
   return apiRequest<NewsResponse>(`/api/news?${params.toString()}`);
 }
