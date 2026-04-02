@@ -92,19 +92,59 @@ def clean_utf8_text(text: str) -> str:
     if not text:
         return ""
     try:
-        # Decode HTML entities
+        # Decode HTML entities first
         text = html.unescape(text)
-        # Fix common encoding issues (mojibake)
+        
+        # Fix common mojibake patterns (UTF-8 interpreted as Latin-1)
+        # Pattern: "ï¿œ" is the replacement character when UTF-8 is misinterpreted
+        mojibake_fixes = {
+            'Ã©': 'é', 'Ã¨': 'è', 'Ãª': 'ê', 'Ã«': 'ë',
+            'Ã ': 'à', 'Ã¢': 'â', 'Ã¤': 'ä',
+            'Ã¹': 'ù', 'Ã»': 'û', 'Ã¼': 'ü',
+            'Ã®': 'î', 'Ã¯': 'ï', 'Ã´': 'ô',
+            'Ã§': 'ç', 'Å"': 'œ', 'Ã¦': 'æ',
+            'â€™': "'", 'â€"': '–', 'â€"': '—',
+            'â€œ': '"', 'â€': '"',
+            'Ã‰': 'É', 'Ãˆ': 'È', 'ÃŠ': 'Ê',
+            'Ã€': 'À', 'Ã‚': 'Â',
+            'Ã"': 'Ô', 'Ã›': 'Û',
+            'Ã‡': 'Ç',
+            # Common replacement character patterns
+            'ï¿œ': '', 'ï»¿': '', '\ufffd': '',
+            'Â ': ' ', 'Â': '',
+        }
+        
+        for bad, good in mojibake_fixes.items():
+            text = text.replace(bad, good)
+        
+        # Try to fix double-encoded UTF-8 (encoded twice)
         try:
-            # Try to fix double-encoded UTF-8
-            text = text.encode('latin1').decode('utf-8')
+            # If text was UTF-8 encoded as Latin-1, decode it properly
+            decoded = text.encode('latin-1').decode('utf-8')
+            if decoded != text:
+                text = decoded
         except (UnicodeDecodeError, UnicodeEncodeError):
             pass
+        
+        # Try another common pattern: UTF-8 bytes interpreted as Windows-1252
+        try:
+            decoded = text.encode('cp1252').decode('utf-8')
+            if decoded != text and 'ï¿' not in decoded:
+                text = decoded
+        except (UnicodeDecodeError, UnicodeEncodeError):
+            pass
+        
+        # Remove remaining replacement characters and control chars
+        text = text.replace('\ufffd', '')
+        text = text.replace('ï¿œ', '')
+        
         # Normalize unicode characters
         import unicodedata
         text = unicodedata.normalize('NFC', text)
-        # Remove null bytes and control characters
+        
+        # Remove null bytes and control characters (except newlines/tabs)
         text = ''.join(char for char in text if ord(char) >= 32 or char in '\n\r\t')
+        
         return text.strip()
     except Exception:
         return text
@@ -1267,6 +1307,42 @@ async def force_migrate_countries():
                 logger.info(f"Force updated {result.modified_count} articles from {source_name}")
     
     return {"message": "Migration complete", "results": results}
+
+@dashboard_router.post("/fix-encoding")
+async def fix_encoding_data():
+    """Fix UTF-8 encoding issues in existing articles"""
+    logger.info("UTF-8 encoding fix requested via API")
+    
+    # Get all articles
+    cursor = db.news.find({})
+    articles = await cursor.to_list(length=None)
+    
+    fixed_count = 0
+    for article in articles:
+        updates = {}
+        
+        # Clean title
+        if "title" in article and article["title"]:
+            cleaned_title = clean_utf8_text(article["title"])
+            if cleaned_title != article["title"]:
+                updates["title"] = cleaned_title
+        
+        # Clean content
+        if "content" in article and article["content"]:
+            cleaned_content = clean_utf8_text(article["content"])
+            if cleaned_content != article["content"]:
+                updates["content"] = cleaned_content
+        
+        # Apply updates if needed
+        if updates:
+            await db.news.update_one(
+                {"_id": article["_id"]},
+                {"$set": updates}
+            )
+            fixed_count += 1
+    
+    logger.info(f"Fixed encoding for {fixed_count} articles")
+    return {"message": "Encoding fix complete", "fixed_count": fixed_count, "total_articles": len(articles)}
 
 app.include_router(dashboard_router)
 

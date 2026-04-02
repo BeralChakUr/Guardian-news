@@ -333,7 +333,7 @@ export default function SimpleDashboard() {
             {/* 1️⃣ CYBER RADAR */}
             <ChartCard
               title="Radar des Cybermenaces"
-              description="Vue d'ensemble en temps réel des menaces actuelles"
+              description="Ce graphique montre la répartition des types d'attaques détectées. Plus une zone est grande, plus ce type de menace est fréquent actuellement."
             >
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -360,12 +360,18 @@ export default function SimpleDashboard() {
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
+              <div className="mt-4 p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30">
+                <p className="text-xs text-cyan-200">
+                  💡 <strong>Comment lire ce graphique ?</strong> Chaque axe représente un type de menace (phishing, ransomware...). 
+                  Plus la zone bleue s'étend vers l'extérieur, plus cette menace est active.
+                </p>
+              </div>
             </ChartCard>
 
             {/* 2️⃣ THREAT TREND GRAPH */}
             <ChartCard
               title="Tendance des Menaces"
-              description="Évolution des menaces détectées"
+              description="Nombre total d'incidents de sécurité détectés chaque semaine. Permet de voir si la situation s'améliore ou se dégrade."
             >
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -379,6 +385,7 @@ export default function SimpleDashboard() {
                     <YAxis 
                       tick={{ fill: '#8B949E', fontSize: 12 }}
                       axisLine={{ stroke: '#1E3A5F' }}
+                      label={{ value: 'Nb incidents', angle: -90, position: 'insideLeft', fill: '#8B949E', fontSize: 11 }}
                     />
                     <Tooltip
                       contentStyle={{
@@ -387,6 +394,7 @@ export default function SimpleDashboard() {
                         borderRadius: '8px',
                       }}
                       labelStyle={{ color: '#fff' }}
+                      formatter={(value) => [`${value} incidents`, 'Menaces']}
                     />
                     <Line
                       type="monotone"
@@ -399,17 +407,18 @@ export default function SimpleDashboard() {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-              <div className="mt-4 flex items-center gap-2 text-sm">
-                <TrendingUp className="h-4 w-4 text-orange-400" />
-                <span className="text-orange-400 font-medium">+42% augmentation</span>
-                <span className="text-gray-500">ce mois-ci</span>
+              <div className="mt-4 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
+                <p className="text-xs text-orange-200">
+                  💡 <strong>Comment lire ce graphique ?</strong> Chaque point représente le nombre de menaces détectées par semaine. 
+                  Une courbe qui monte = plus de menaces. Une courbe qui descend = amélioration de la situation.
+                </p>
               </div>
             </ChartCard>
 
             {/* 3️⃣ THREAT TYPE DISTRIBUTION */}
             <ChartCard
               title="Répartition des Menaces"
-              description="Distribution par catégorie"
+              description="Part de chaque type de menace parmi tous les incidents récents. Permet d'identifier les attaques les plus courantes."
             >
               <div className="space-y-3">
                 {threatDistribution.map((threat, index) => {
