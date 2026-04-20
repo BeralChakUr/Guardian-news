@@ -1,7 +1,7 @@
 """Legacy /api endpoints (backward compatibility)"""
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, BackgroundTasks, Query
 
 from ...schemas.news import AISummaryRequest, AISummaryResponse, NewsResponse
 from . import news as news_api
@@ -39,6 +39,11 @@ async def get_news_detail_legacy(news_id: str):
 @router.post("/news/ai-summary", response_model=AISummaryResponse)
 async def ai_summary_legacy(request: AISummaryRequest):
     return await news_api.ai_summary(request)
+
+
+@router.post("/news/refresh")
+async def refresh_legacy(background_tasks: BackgroundTasks):
+    return await news_api.trigger_refresh(background_tasks)
 
 
 @router.post("/admin/migrate-countries")
