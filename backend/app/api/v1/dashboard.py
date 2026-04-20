@@ -121,6 +121,19 @@ async def fix_encoding():
     return {"message": "Encoding fix complete", **result}
 
 
+@router.post("/backfill-attack-type")
+async def backfill_attack_type():
+    """Backfill attack_type field for legacy articles using their threat_type."""
+    from ...core.database import Database
+    db = Database.get_db()
+    # Set attack_type = threat_type where missing or null
+    result = await db.news.update_many(
+        {"$or": [{"attack_type": {"$exists": False}}, {"attack_type": None}, {"attack_type": ""}]},
+        [{"$set": {"attack_type": "$threat_type"}}],
+    )
+    return {"message": "Backfill complete", "matched": result.matched_count, "modified": result.modified_count}
+
+
 @router.get("/summary")
 async def get_summary():
     repo = get_news_repository()

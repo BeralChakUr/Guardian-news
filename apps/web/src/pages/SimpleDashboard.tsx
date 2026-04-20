@@ -42,6 +42,8 @@ import { getNews, getTension, getDashboardSummary, getTopThreats } from '../serv
 import AIThreatSummaryReal from '../components/AIThreatSummaryReal';
 import KpiCard from '../components/KpiCard';
 import ThreatEvolutionChart from '../components/ThreatEvolutionChart';
+import AttackTypeBarChart from '../components/AttackTypeBarChart';
+import CountryPieChart from '../components/CountryPieChart';
 
 // Sidebar Navigation
 const navItems = [
@@ -431,83 +433,11 @@ export default function SimpleDashboard() {
               </div>
             </ChartCard>
 
-            {/* 2️⃣ THREAT TREND GRAPH */}
-            <ChartCard
-              title="Tendance des Menaces"
-              description="Nombre total d'incidents de sécurité détectés chaque semaine. Permet de voir si la situation s'améliore ou se dégrade."
-            >
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trendData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
-                    <XAxis 
-                      dataKey="week" 
-                      tick={{ fill: '#8B949E', fontSize: 12 }}
-                      axisLine={{ stroke: '#1E3A5F' }}
-                    />
-                    <YAxis 
-                      tick={{ fill: '#8B949E', fontSize: 12 }}
-                      axisLine={{ stroke: '#1E3A5F' }}
-                      label={{ value: 'Nb incidents', angle: -90, position: 'insideLeft', fill: '#8B949E', fontSize: 11 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#0D1B2A',
-                        border: '1px solid #1E3A5F',
-                        borderRadius: '8px',
-                      }}
-                      labelStyle={{ color: '#fff' }}
-                      formatter={(value) => [`${value} incidents`, 'Menaces']}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="threats"
-                      stroke="#F0883E"
-                      strokeWidth={3}
-                      dot={{ fill: '#F0883E', strokeWidth: 2, r: 6 }}
-                      activeDot={{ r: 8, fill: '#F0883E' }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-4 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
-                <p className="text-xs text-orange-200">
-                  💡 <strong>Comment lire ce graphique ?</strong> Chaque point représente le nombre de menaces détectées par semaine. 
-                  Une courbe qui monte = plus de menaces. Une courbe qui descend = amélioration de la situation.
-                </p>
-              </div>
-            </ChartCard>
+            {/* 2️⃣ V4 - REAL ATTACK TYPE BAR CHART */}
+            <AttackTypeBarChart />
 
-            {/* 3️⃣ THREAT TYPE DISTRIBUTION */}
-            <ChartCard
-              title="Répartition des Menaces"
-              description="Part de chaque type de menace parmi tous les incidents récents. Permet d'identifier les attaques les plus courantes."
-            >
-              <div className="space-y-3">
-                {threatDistribution.map((threat, index) => {
-                  const percentage = totalThreats > 0 ? Math.round((threat.count / totalThreats) * 100) : 0;
-                  return (
-                    <div key={threat.name} className="group">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm text-gray-300">{threat.name}</span>
-                        <span className="text-sm text-gray-500">
-                          {threat.count} <span className="text-gray-600">({percentage}%)</span>
-                        </span>
-                      </div>
-                      <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
-                          style={{
-                            width: `${percentage}%`,
-                            backgroundColor: threat.color,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </ChartCard>
+            {/* 3️⃣ V4 - REAL COUNTRY PIE CHART */}
+            <CountryPieChart />
 
             {/* 4️⃣ LATEST INCIDENTS TABLE */}
             <ChartCard

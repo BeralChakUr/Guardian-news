@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ExternalLink, CheckCircle, AlertTriangle, Users, Shield, Clock, Tag } from 'lucide-react';
+import { ArrowLeft, ExternalLink, CheckCircle, AlertTriangle, Users, Shield, Clock, Tag, HelpCircle, Briefcase, Home, Building2 } from 'lucide-react';
 import { getNewsById } from '../services/newsService';
 
 const severityStyles: Record<string, string> = {
@@ -122,6 +122,106 @@ export default function NewsDetailPage() {
           </ul>
         </section>
       )}
+
+      {/* V4 - Suis-je concerné ? */}
+      <section
+        className="mb-6 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-blue-500/5 border border-cyan-500/30 p-6"
+        data-testid="am-i-concerned"
+      >
+        <div className="mb-4 flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-cyan-500/20">
+            <HelpCircle className="h-5 w-5 text-cyan-400" />
+          </div>
+          <h2 className="text-lg font-semibold text-white">Suis-je concerné ?</h2>
+        </div>
+        <p className="text-sm text-slate-300 mb-5 leading-relaxed">
+          Identifiez rapidement si cette alerte vous concerne en fonction de votre profil.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {[
+            {
+              icon: Home,
+              label: 'Particulier',
+              level: (() => {
+                const s = news.severity;
+                const t = news.threat_type;
+                if (t === 'phishing' || t === 'scam') return 'high';
+                if (t === 'data_leak' || s === 'critique') return 'medium';
+                return 'low';
+              })(),
+              hint: (() => {
+                const t = news.threat_type;
+                if (t === 'phishing') return 'Risque fort : vérifiez vos emails';
+                if (t === 'scam') return 'Risque fort : méfiez-vous des appels/SMS';
+                if (t === 'data_leak') return 'Vérifiez haveibeenpwned.com';
+                if (t === 'ransomware') return 'Sauvegardez vos fichiers';
+                return 'Restez vigilant';
+              })(),
+            },
+            {
+              icon: Briefcase,
+              label: 'PME / TPE',
+              level: (() => {
+                const s = news.severity;
+                const t = news.threat_type;
+                if (t === 'ransomware' || t === 'phishing' || t === 'vuln') return 'high';
+                if (s === 'critique' || s === 'eleve') return 'medium';
+                return 'low';
+              })(),
+              hint: (() => {
+                const t = news.threat_type;
+                if (t === 'ransomware') return 'Risque métier élevé — sauvegardes 3-2-1';
+                if (t === 'vuln') return 'Vérifiez vos systèmes exposés';
+                if (t === 'phishing') return 'Sensibilisez vos équipes';
+                if (t === 'data_leak') return 'Vérifiez vos accès & mots de passe';
+                return 'Mettez à jour vos systèmes';
+              })(),
+            },
+            {
+              icon: Building2,
+              label: 'Entreprise / Secteur public',
+              level: (() => {
+                const s = news.severity;
+                const t = news.threat_type;
+                if (s === 'critique' || t === 'apt' || t === 'ransomware' || t === 'vuln') return 'high';
+                if (s === 'eleve') return 'medium';
+                return 'low';
+              })(),
+              hint: (() => {
+                const t = news.threat_type;
+                if (t === 'apt') return 'Menace ciblée — alertez votre SOC';
+                if (t === 'ransomware') return 'Plan de continuité d\'activité';
+                if (t === 'vuln') return 'Patchez vos infrastructures critiques';
+                if (t === 'data_leak') return 'Notification RGPD sous 72h si affecté';
+                return 'Surveillance renforcée recommandée';
+              })(),
+            },
+          ].map((p) => {
+            const Icon = p.icon;
+            const styles = p.level === 'high'
+              ? { border: 'border-red-500/40', bg: 'bg-red-500/10', text: 'text-red-300', dot: 'bg-red-500', badge: 'Concerné' }
+              : p.level === 'medium'
+              ? { border: 'border-orange-500/40', bg: 'bg-orange-500/10', text: 'text-orange-300', dot: 'bg-orange-500', badge: 'À surveiller' }
+              : { border: 'border-emerald-500/40', bg: 'bg-emerald-500/10', text: 'text-emerald-300', dot: 'bg-emerald-500', badge: 'Peu concerné' };
+            return (
+              <div
+                key={p.label}
+                className={`relative rounded-xl border ${styles.border} ${styles.bg} p-4`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon className={`h-4 w-4 ${styles.text}`} />
+                  <span className="text-sm font-semibold text-white">{p.label}</span>
+                </div>
+                <div className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${styles.text}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} />
+                  {styles.badge}
+                </div>
+                <p className="mt-2 text-xs text-slate-300 leading-snug">{p.hint}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Impact Section */}
       {news.impact && (

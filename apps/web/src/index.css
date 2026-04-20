@@ -15,19 +15,42 @@ body {
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #161B22;
+  background: #0b1220;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #30363D;
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #484F58;
+  background: linear-gradient(180deg, #475569 0%, #334155 100%);
+}
+
+/* Hide scrollbar utility (for filter chips strip) */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth focus ring on dark theme */
+*:focus-visible {
+  outline: 2px solid #06b6d4;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Improve text selection on dark */
+::selection {
+  background: rgba(6, 182, 212, 0.35);
+  color: #fff;
 }
 
 /* Severity badge animations */

@@ -353,23 +353,23 @@ function AttackDetailModal({ attack, onClose }: { attack: Attack; onClose: () =>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-cyber-surface border border-gray-700 shadow-2xl">
         {/* Header */}
-        <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b border-gray-700 ${attack.bgColor}`}>
-          <div className="flex items-center gap-4">
-            <div className={`rounded-xl p-3 bg-white/10`}>
+        <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b border-gray-700 bg-cyber-surface/95 backdrop-blur-md`}>
+          <div className="flex items-center gap-4 min-w-0 flex-1">
+            <div className={`rounded-xl p-3 ${attack.bgColor} border ${attack.borderColor} shrink-0`}>
               <Icon className={`h-8 w-8 ${attack.color}`} />
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">{attack.name}</h2>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-xl font-bold text-white truncate">{attack.name}</h2>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-sm ${severity.textColor}`}>{severity.emoji} {severity.label}</span>
                 <span className="text-gray-500">•</span>
-                <span className="text-sm text-gray-400">{attack.category}</span>
+                <span className="text-sm text-gray-400 truncate">{attack.category}</span>
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors shrink-0 ml-2"
           >
             <X className="w-5 h-5 text-gray-400" />
           </button>
