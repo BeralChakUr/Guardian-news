@@ -161,3 +161,14 @@ export interface GroupedNewsResponse {
 export async function getGroupedNews(limit: number = 10): Promise<GroupedNewsResponse> {
   return apiRequest<GroupedNewsResponse>(`/api/dashboard/news-grouped?limit=${limit}`);
 }
+
+// Application Version
+export interface VersionInfo {
+  version: string;
+  name: string;
+  api_version: string;
+}
+
+export async function getVersion(): Promise<VersionInfo> {
+  return apiRequest<VersionInfo>('/api/dashboard/version');
+}

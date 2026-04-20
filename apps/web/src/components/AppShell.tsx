@@ -13,11 +13,12 @@ import {
   LayoutDashboard, 
   Home,
   Globe,
-  Radio
+  Radio,
+  Info
 } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getTension } from '../services/newsService';
+import { getTension, getVersion } from '../services/newsService';
 
 const navItems = [
   { to: '/', icon: Home, label: 'Accueil', description: 'Page d\'accueil', end: true },
@@ -40,6 +41,17 @@ export default function AppShell() {
     staleTime: 6 * 60 * 60 * 1000,
   });
 
+  const { data: versionInfo } = useQuery({
+    queryKey: ['app-version'],
+    queryFn: getVersion,
+    staleTime: 24 * 60 * 60 * 1000,
+    retry: 1,
+  });
+
+  const versionLabel = versionInfo?.version
+    ? `V${versionInfo.version.split('.').slice(0, 2).join('.')}`
+    : 'V4.0';
+
   const getTensionColor = (level: string) => {
     switch (level?.toLowerCase()) {
       case 'critique': return 'text-red-400 bg-red-500/20 border-red-500/30';
@@ -60,7 +72,12 @@ export default function AppShell() {
               <Shield className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">Guardian News</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">Guardian News</h1>
+                <span className="inline-flex items-center rounded-md border border-cyan-500/40 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300">
+                  {versionLabel}
+                </span>
+              </div>
               <p className="text-xs text-slate-500">Plateforme Cyber</p>
             </div>
           </Link>
@@ -116,6 +133,12 @@ export default function AppShell() {
                 <p className="text-2xl font-bold text-white">11</p>
                 <p className="text-xs text-slate-500 mt-1">Sources OSINT surveillées</p>
               </div>
+              <div className="mt-3 flex items-center justify-between text-[10px] text-slate-500 px-1">
+                <span>Guardian News</span>
+                <span className="font-mono font-semibold text-cyan-400/80">
+                  {versionInfo?.version ? `v${versionInfo.version}` : 'v4.0.0'}
+                </span>
+              </div>
             </div>
           </nav>
         </div>
@@ -128,7 +151,12 @@ export default function AppShell() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600">
               <Shield className="h-5 w-5 text-white" />
             </div>
-            <span className="font-bold text-white">Guardian</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-white">Guardian</span>
+              <span className="inline-flex items-center rounded-md border border-cyan-500/40 bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300">
+                {versionLabel}
+              </span>
+            </div>
           </Link>
           
           {/* Mobile Tension Badge */}
