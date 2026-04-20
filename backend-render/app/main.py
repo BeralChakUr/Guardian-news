@@ -1,120 +1,104 @@
-"""Guardian News Backend - Main Application.
-
-A production-ready FastAPI backend for cybersecurity threat intelligence.
-"""
+"""FastAPI application factory (V4 modular architecture)"""
+import asyncio
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from datetime import datetime
 
-from .config import get_settings
-from .database import connect_db, disconnect_db
-from .routes import news_router, dashboard_router, ai_router
-from .services import seed_database
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+from fastapi import FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.cors import CORSMiddleware
+from starlette.requests import Request
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+from .api.deps import get_rss_service, reset_rss_service
+from .api.v1 import ALL_ROUTERS
+from .core.config import (
+    API_VERSION,
+    APP_NAME,
+    APP_VERSION,
+    RSS_INGESTION_INTERVAL_MINUTES,
 )
-logger = logging.getLogger(__name__)
+from .core.database import Database
+from .core.logging_config import setup_logging
+
+logger = setup_logging()
+
+
+class UTF8ResponseMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        content_type = response.headers.get("content-type", "")
+        if "application/json" in content_type and "charset" not in content_type:
+            response.headers["content-type"] = "application/json; charset=utf-8"
+        return response
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan handler."""
-    settings = get_settings()
-    
     # Startup
-    logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
-    
-    # Validate configuration
-    errors = settings.validate()
-    if errors:
-        for error in errors:
-            logger.error(f"Configuration error: {error}")
-        raise RuntimeError("Invalid configuration")
-    
-    # Connect to database
-    await connect_db()
-    
-    # Seed database with initial data
-    try:
-        seed_result = await seed_database()
-        if any(seed_result.values()):
-            logger.info(f"Database seeded: {seed_result}")
-    except Exception as e:
-        logger.warning(f"Seed failed (non-critical): {e}")
-    
-    logger.info("Application started successfully")
-    
+    await Database.connect()
+    await Database.create_indexes()
+    rss = get_rss_service()
+    await rss.migrate_country_data()
+
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(
+        rss.run_ingestion,
+        IntervalTrigger(minutes=RSS_INGESTION_INTERVAL_MINUTES),
+        id="rss_ingestion",
+        replace_existing=True,
+    )
+    scheduler.start()
+    app.state.scheduler = scheduler
+
+    logger.info("Running initial RSS ingestion...")
+    asyncio.create_task(rss.run_ingestion())
+
     yield
-    
+
     # Shutdown
-    logger.info("Shutting down application")
-    await disconnect_db()
+    scheduler.shutdown()
+    await rss.close()
+    reset_rss_service()
+    await Database.disconnect()
 
 
-# Create FastAPI app
-settings = get_settings()
-app = FastAPI(
-    title=settings.APP_NAME,
-    description="Cybersecurity Threat Intelligence API for Guardian News",
-    version=settings.APP_VERSION,
-    lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
-)
-
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-# Exception handler
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Global exception handler."""
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error"}
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title=f"{APP_NAME} API",
+        description="Cybersecurity News Intelligence API (V4)",
+        version=APP_VERSION,
+        lifespan=lifespan,
     )
 
+    # Middlewares
+    app.add_middleware(UTF8ResponseMiddleware)
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-# Health check endpoint
-@app.get("/health", tags=["Health"])
-async def health_check():
-    """Health check endpoint."""
-    return {
-        "status": "healthy",
-        "service": settings.APP_NAME,
-        "version": settings.APP_VERSION,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    # Health & root
+    @app.get("/", tags=["Health"])
+    async def root():
+        return {"message": f"{APP_NAME} API is running", "version": APP_VERSION}
+
+    @app.get("/health", tags=["Health"])
+    async def health():
+        return {"status": "ok", "version": APP_VERSION}
+
+    # All routers
+    for router in ALL_ROUTERS:
+        app.include_router(router)
+
+    logger.info(f"FastAPI app created: {APP_NAME} v{APP_VERSION} (api {API_VERSION})")
+    return app
 
 
-# Root endpoint
-@app.get("/", tags=["Health"])
-async def root():
-    """Root endpoint with API information."""
-    return {
-        "name": settings.APP_NAME,
-        "version": settings.APP_VERSION,
-        "status": "online",
-        "docs": "/docs",
-        "health": "/health"
-    }
-
-
-# Include routers
-app.include_router(news_router)
-app.include_router(dashboard_router)
-app.include_router(ai_router)
+# Module-level app instance for ASGI servers (e.g. `uvicorn app.main:app`)
+app = create_app()

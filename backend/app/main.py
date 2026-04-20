@@ -98,3 +98,7 @@ def create_app() -> FastAPI:
 
     logger.info(f"FastAPI app created: {APP_NAME} v{APP_VERSION} (api {API_VERSION})")
     return app
+
+
+# Module-level app instance for ASGI servers (e.g. `uvicorn app.main:app`)
+app = create_app()
