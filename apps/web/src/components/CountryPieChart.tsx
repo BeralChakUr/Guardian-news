@@ -94,9 +94,9 @@ export default function CountryPieChart({
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
-                formatter={(value: number, _name, p: any) => [
-                  `${value} articles (${p.payload.percentage}%)`,
-                  p.payload.name,
+                formatter={(value: any, _name: any, item: any) => [
+                  `${value} articles (${item?.payload?.percentage ?? 0}%)`,
+                  item?.payload?.name ?? '',
                 ]}
               />
               <Legend

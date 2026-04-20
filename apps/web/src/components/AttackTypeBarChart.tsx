@@ -99,8 +99,8 @@ export default function AttackTypeBarChart() {
                   fontSize: '12px',
                 }}
                 labelStyle={{ color: '#cbd5e1', fontWeight: 600 }}
-                formatter={(value: number, _name, p: any) => [
-                  `${value} (${p.payload.percentage}%)`,
+                formatter={(value: any, _name: any, item: any) => [
+                  `${value} (${item?.payload?.percentage ?? 0}%)`,
                   'Articles',
                 ]}
               />
