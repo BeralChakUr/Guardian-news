@@ -162,7 +162,9 @@ class RSSFetcherService:
         try:
             client = await self.get_client()
             response = await client.get(source["url"])
-            feed = feedparser.parse(response.text)
+            # CRITICAL: pass raw bytes to feedparser so it can detect encoding itself.
+            # Passing response.text (already-decoded str) loses accented chars for some feeds.
+            feed = feedparser.parse(response.content)
             articles = []
             for entry in feed.entries[:MAX_ARTICLES_PER_FEED]:
                 title = clean_utf8_text(entry.get("title", ""))

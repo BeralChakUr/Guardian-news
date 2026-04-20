@@ -154,6 +154,48 @@ async def backfill_attack_type():
     return {"message": "Backfill complete", "matched": result.matched_count, "modified": result.modified_count}
 
 
+@router.post("/purge-corrupted-and-reingest")
+async def purge_corrupted_and_reingest():
+    """Delete articles with corrupted encoding (stripped accents) and re-ingest fresh data."""
+    from ...core.database import Database
+    db = Database.get_db()
+    # Heuristic: French article with title that has 'é' frequency anomaly.
+    # Delete any article containing "\ufffd" OR whose source is a French source
+    # AND has no French accent chars in title/content when length > 40.
+    french_sources = ["CERT-FR", "ANSSI", "Cybermalveillance.gouv", "Sekoia",
+                      "Global Security Mag", "Le Monde Informatique"]
+    accent_chars = set("éèêëàâäùûüîïôç")
+
+    cursor = db.news.find({"source": {"$in": french_sources}}, {"title": 1, "content": 1})
+    to_delete = []
+    async for doc in cursor:
+        title = (doc.get("title") or "")
+        content = (doc.get("content") or "")[:500]
+        combined = title + " " + content
+        # Suspicious: long French text but zero accented chars
+        if len(combined) > 60 and not any(c in accent_chars for c in combined.lower()):
+            to_delete.append(doc["_id"])
+        # OR contains mojibake sequences
+        elif "\ufffd" in combined or "ï¿" in combined:
+            to_delete.append(doc["_id"])
+
+    deleted = 0
+    if to_delete:
+        result = await db.news.delete_many({"_id": {"$in": to_delete}})
+        deleted = result.deleted_count
+
+    # Re-run ingestion
+    from ..deps import get_rss_service
+    rss = get_rss_service()
+    saved = await rss.run_ingestion()
+
+    return {
+        "message": "Purge + re-ingest complete",
+        "deleted_corrupted": deleted,
+        "new_articles": saved,
+    }
+
+
 @router.get("/summary")
 async def get_summary():
     repo = get_news_repository()
