@@ -16,6 +16,7 @@ import {
   HelpCircle,
   X,
 } from 'lucide-react';
+import RelatedArticlesBlock from '../components/RelatedArticlesBlock';
 
 // Attack types with symptoms for quick recognition
 const attacks = [
@@ -588,6 +589,17 @@ export default function AttaquesPage() {
             </div>
           );
         })}
+      </div>
+
+      {/* V4 - Real articles linked to attacks */}
+      <div className="mt-8">
+        <RelatedArticlesBlock
+          title="Articles récents liés aux attaques"
+          description="Actualités ransomware, malware et exploits détectés sur les 7 derniers jours"
+          filters={{ type: 'ransomware' }}
+          limit={6}
+          testId="attaques-related-articles"
+        />
       </div>
 
       {/* Detail Modal */}

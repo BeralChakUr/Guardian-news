@@ -200,7 +200,10 @@ export interface TopThreat {
   severity: string;
   target?: string | null;
   impact_summary?: string | null;
+  recommended_action?: string | null;
+  recommended_actions?: string[];
   source: string;
+  country?: string;
   published_at: string;
   score: number;
 }

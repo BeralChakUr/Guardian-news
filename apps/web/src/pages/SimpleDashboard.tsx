@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Shield,
   AlertTriangle,
-  Bug,
   Radio,
   ChevronRight,
   ExternalLink,
@@ -20,30 +19,15 @@ import {
   Zap,
   Bot,
   Home,
+  Building2,
 } from 'lucide-react';
-import {
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  BarChart,
-  Bar,
-  Cell,
-} from 'recharts';
 import { getNews, getTension, getDashboardSummary, getTopThreats } from '../services/newsService';
 import AIThreatSummaryReal from '../components/AIThreatSummaryReal';
 import KpiCard from '../components/KpiCard';
 import ThreatEvolutionChart from '../components/ThreatEvolutionChart';
 import AttackTypeBarChart from '../components/AttackTypeBarChart';
 import CountryPieChart from '../components/CountryPieChart';
+import SourcesDistribution from '../components/SourcesDistribution';
 
 // Sidebar Navigation
 const navItems = [
@@ -56,8 +40,6 @@ const navItems = [
   { to: '/dashboard/sources', icon: Globe, label: 'Sources' },
   { to: '/dashboard/parametres', icon: Settings, label: 'Paramètres' },
 ];
-
-const sources = ['CERT-FR', 'CISA', 'KrebsOnSecurity', 'BleepingComputer'];
 
 // KPI Card Component
 function MetricCard({ 
@@ -142,37 +124,6 @@ export default function SimpleDashboard() {
   const news = newsData?.items ?? [];
   const total = newsData?.total ?? 0;
 
-  // Calculate threat distribution from real data
-  const threatDistribution = [
-    { name: 'Phishing', count: news.filter(n => n.threat_type === 'phishing').length, color: '#58A6FF' },
-    { name: 'Ransomware', count: news.filter(n => n.threat_type === 'ransomware').length, color: '#F85149' },
-    { name: 'Vulnérabilités', count: news.filter(n => n.threat_type === 'vuln').length, color: '#F0883E' },
-    { name: 'Malware', count: news.filter(n => n.threat_type === 'malware').length, color: '#A371F7' },
-    { name: 'Fuite de données', count: news.filter(n => n.threat_type === 'data_leak').length, color: '#3FB950' },
-  ].sort((a, b) => b.count - a.count);
-
-  const totalThreats = threatDistribution.reduce((sum, t) => sum + t.count, 0);
-
-  // Radar chart data
-  const radarData = [
-    { category: 'Phishing', value: news.filter(n => n.threat_type === 'phishing').length * 10 || 20 },
-    { category: 'Ransomware', value: news.filter(n => n.threat_type === 'ransomware').length * 10 || 15 },
-    { category: 'Malware', value: news.filter(n => n.threat_type === 'malware').length * 10 || 25 },
-    { category: 'Vulnérabilités', value: news.filter(n => n.threat_type === 'vuln').length * 10 || 30 },
-    { category: 'DDoS', value: news.filter(n => n.threat_type === 'ddos').length * 10 || 10 },
-    { category: 'Fuite données', value: news.filter(n => n.threat_type === 'data_leak').length * 10 || 18 },
-    { category: 'Cloud', value: 12 },
-    { category: 'Identité', value: 8 },
-  ];
-
-  // Trend data (simulated weekly trend)
-  const trendData = [
-    { week: 'Sem. 1', threats: Math.round(total * 0.6) },
-    { week: 'Sem. 2', threats: Math.round(total * 0.75) },
-    { week: 'Sem. 3', threats: Math.round(total * 0.85) },
-    { week: 'Sem. 4', threats: total },
-  ];
-
   // Calculate metrics
   const criticalCount = news.filter(n => n.severity === 'critique').length;
   const highCount = news.filter(n => n.severity === 'eleve').length;
@@ -243,16 +194,14 @@ export default function SimpleDashboard() {
           </ul>
         </nav>
 
-        {/* Sources */}
+        {/* Footer info */}
         <div className="p-4 border-t border-gray-800">
-          <p className="text-xs text-gray-500 mb-3">Sources surveillées</p>
-          <div className="flex flex-wrap gap-2">
-            {sources.map(source => (
-              <span key={source} className="px-2 py-1 rounded-lg bg-white/5 text-xs text-gray-400">
-                {source}
-              </span>
-            ))}
+          <div className="flex items-center gap-2 mb-2">
+            <Radio className="h-3.5 w-3.5 text-green-400 animate-pulse" />
+            <p className="text-xs text-gray-400">Surveillance live</p>
           </div>
+          <p className="text-2xl font-bold text-white">{summary?.kpis.active_sources ?? '—'}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Sources OSINT surveillées</p>
         </div>
       </aside>
 
@@ -312,7 +261,7 @@ export default function SimpleDashboard() {
             />
           </div>
 
-          {/* ==================== TOP 3 THREATS ==================== */}
+          {/* ==================== TOP 3 THREATS (V4 — enriched) ==================== */}
           {topThreats && topThreats.threats.length > 0 && (
             <div className="rounded-2xl border border-slate-800 bg-[#0D1B2A] p-5">
               <div className="flex items-center justify-between mb-4">
@@ -321,29 +270,56 @@ export default function SimpleDashboard() {
                     <Zap className="h-5 w-5 text-orange-400" />
                     Top 3 menaces du jour
                   </h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Classées par gravité et récence</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Classées par score (gravité × récence × fiabilité source)
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {topThreats.threats.map((t, idx) => {
-                  const sevColor = t.severity === 'critique' ? 'border-red-500/40 bg-red-500/5' : t.severity === 'eleve' ? 'border-orange-500/40 bg-orange-500/5' : 'border-yellow-500/40 bg-yellow-500/5';
+                  const sevColor = t.severity === 'critique'
+                    ? 'border-red-500/40 bg-red-500/5'
+                    : t.severity === 'eleve'
+                    ? 'border-orange-500/40 bg-orange-500/5'
+                    : 'border-yellow-500/40 bg-yellow-500/5';
+                  const sevBadgeColor = t.severity === 'critique'
+                    ? 'text-red-300 bg-red-500/15'
+                    : t.severity === 'eleve'
+                    ? 'text-orange-300 bg-orange-500/15'
+                    : 'text-yellow-300 bg-yellow-500/15';
                   return (
                     <Link
                       key={t.id}
                       to={`/dashboard/news/${t.id}`}
-                      className={`group rounded-xl border ${sevColor} p-3 transition-all hover:border-cyan-500/40`}
+                      className={`group rounded-xl border ${sevColor} p-4 transition-all hover:border-cyan-500/40 flex flex-col`}
                       data-testid={`dashboard-top-threat-${idx}`}
                     >
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 mb-2">
                         <span className="flex h-5 w-5 items-center justify-center rounded bg-white/10 text-[10px] font-bold text-white">
                           {idx + 1}
                         </span>
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-300">
+                        <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${sevBadgeColor}`}>
                           {t.severity}
                         </span>
-                        <span className="ml-auto text-[10px] text-slate-500">{t.source}</span>
+                        <span className="ml-auto rounded-full bg-slate-800/60 px-2 py-0.5 text-[9px] font-bold text-cyan-300">
+                          {Math.round(t.score)}
+                        </span>
                       </div>
-                      <p className="text-sm text-white line-clamp-2 leading-snug">{t.title}</p>
+                      <p className="text-sm text-white line-clamp-2 leading-snug mb-2">{t.title}</p>
+                      <div className="mt-auto space-y-1.5 text-[11px]">
+                        <div className="flex items-center gap-1 text-slate-400">
+                          <Swords className="h-3 w-3 shrink-0" />
+                          <span className="truncate">Type : <span className="text-slate-200 capitalize">{t.attack_type}</span></span>
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-400">
+                          <Building2 className="h-3 w-3 shrink-0" />
+                          <span className="truncate">Cible : <span className="text-slate-200">{t.target}</span></span>
+                        </div>
+                        <div className="flex items-start gap-1 rounded-md bg-cyan-500/5 border border-cyan-500/15 px-1.5 py-1 text-cyan-200">
+                          <Shield className="h-3 w-3 shrink-0 mt-0.5" />
+                          <span className="line-clamp-2">{t.recommended_action}</span>
+                        </div>
+                      </div>
                     </Link>
                   );
                 })}
@@ -393,51 +369,16 @@ export default function SimpleDashboard() {
             </div>
           </div>
 
-          {/* ==================== CHARTS GRID ==================== */}
+          {/* ==================== CHARTS GRID (V4 - 100% data-driven) ==================== */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* 1️⃣ CYBER RADAR */}
-            <ChartCard
-              title="Radar des Cybermenaces"
-              description="Ce graphique montre la répartition des types d'attaques détectées. Plus une zone est grande, plus ce type de menace est fréquent actuellement."
-            >
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="#1E3A5F" />
-                    <PolarAngleAxis 
-                      dataKey="category" 
-                      tick={{ fill: '#8B949E', fontSize: 11 }}
-                    />
-                    <PolarRadiusAxis 
-                      angle={30} 
-                      domain={[0, 50]} 
-                      tick={{ fill: '#8B949E', fontSize: 10 }}
-                      axisLine={false}
-                    />
-                    <Radar
-                      name="Threats"
-                      dataKey="value"
-                      stroke="#58A6FF"
-                      fill="#58A6FF"
-                      fillOpacity={0.3}
-                      strokeWidth={2}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-4 p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30">
-                <p className="text-xs text-cyan-200">
-                  💡 <strong>Comment lire ce graphique ?</strong> Chaque axe représente un type de menace (phishing, ransomware...). 
-                  Plus la zone bleue s'étend vers l'extérieur, plus cette menace est active.
-                </p>
-              </div>
-            </ChartCard>
-
-            {/* 2️⃣ V4 - REAL ATTACK TYPE BAR CHART */}
+            {/* 1️⃣ V4 - REAL ATTACK TYPE BAR CHART */}
             <AttackTypeBarChart />
 
-            {/* 3️⃣ V4 - REAL COUNTRY PIE CHART */}
+            {/* 2️⃣ V4 - REAL COUNTRY PIE CHART */}
             <CountryPieChart />
+
+            {/* 3️⃣ V4 - REAL SOURCES DISTRIBUTION */}
+            <SourcesDistribution />
 
             {/* 4️⃣ LATEST INCIDENTS TABLE */}
             <ChartCard

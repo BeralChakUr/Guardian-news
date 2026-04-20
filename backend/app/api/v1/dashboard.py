@@ -72,15 +72,35 @@ async def get_dashboard_radar():
 
 @router.get("/news-grouped", response_model=GroupedNewsResponse)
 async def get_news_grouped(limit: int = Query(10, ge=1, le=50)):
+    """Grouped news with anti-bias (30% max per source) and dedup (75% similarity)."""
+    from ...core.config import MAX_SOURCE_PERCENTAGE, TITLE_SIMILARITY_THRESHOLD
+    from ...services.dedup import apply_source_bias_limit, deduplicate_articles
+
     repo = get_news_repository()
-    france_docs = await repo.find_paginated({"country": "FR"}, 0, limit)
-    intl_docs = await repo.find_paginated({"country": {"$ne": "FR"}}, 0, limit)
+    # Fetch 3x limit to leave room for dedup/bias filtering
+    buffer = max(limit * 3, 30)
+    france_docs = await repo.find_paginated({"country": "FR"}, 0, buffer)
+    intl_docs = await repo.find_paginated({"country": {"$ne": "FR"}}, 0, buffer)
+
+    france = [NewsArticle(**d) for d in france_docs]
+    intl = [NewsArticle(**d) for d in intl_docs]
+
+    # Chronological tri (most recent first)
+    france.sort(key=lambda a: a.published_at, reverse=True)
+    intl.sort(key=lambda a: a.published_at, reverse=True)
+
+    # Dedup + anti-bias
+    france = deduplicate_articles(france, TITLE_SIMILARITY_THRESHOLD)[:limit]
+    intl = apply_source_bias_limit(intl, MAX_SOURCE_PERCENTAGE)
+    intl = deduplicate_articles(intl, TITLE_SIMILARITY_THRESHOLD)[:limit]
+
     france_total = await repo.count({"country": "FR"})
     intl_total = await repo.count({"country": {"$ne": "FR"}})
     return GroupedNewsResponse(
-        france=[NewsArticle(**d) for d in france_docs],
-        international=[NewsArticle(**d) for d in intl_docs],
-        france_total=france_total, international_total=intl_total,
+        france=france,
+        international=intl,
+        france_total=france_total,
+        international_total=intl_total,
     )
 
 
@@ -261,28 +281,63 @@ async def timeline_by_period(period: str = "7d"):
 
 @router.get("/top-threats")
 async def top_threats(limit: int = Query(3, ge=1, le=10)):
+    """Top threats sorted by computed score (severity + recency + source reliability)."""
+    from ...core.config import SEVERITY_WEIGHTS, SOURCE_RELIABILITY
     repo = get_news_repository()
     now = datetime.utcnow()
-    today_start = datetime(now.year, now.month, now.day)
+    # Look at the last 7 days
     docs = await repo.find_paginated(
-        {"published_at": {"$gte": today_start - timedelta(days=1)}}, 0, limit * 2,
+        {"published_at": {"$gte": now - timedelta(days=7)}}, 0, 60,
     )
-    severity_order = {"critique": 0, "eleve": 1, "moyen": 2, "faible": 3}
-    docs.sort(key=lambda x: (
-        severity_order.get(x.get("severity", "moyen"), 2),
-        -x.get("published_at", datetime.min).timestamp(),
-    ))
-    top = []
-    for a in docs[:limit]:
-        top.append({
+
+    def compute_score(a: dict) -> float:
+        sev = SEVERITY_WEIGHTS.get(a.get("severity", "moyen"), 2)
+        pub = a.get("published_at")
+        if isinstance(pub, datetime):
+            age_hours = max((now - pub).total_seconds() / 3600.0, 0.5)
+        else:
+            age_hours = 24.0
+        recency = 1.0 / (1 + age_hours / 24.0)  # 1.0 today, ~0.5 after 24h
+        reliability = SOURCE_RELIABILITY.get(a.get("source", ""), 0.7)
+        priority = a.get("priority", 50) / 100.0
+        # Score 0-100
+        return round((sev * 20) * (0.5 + 0.5 * recency) * (0.5 + 0.5 * reliability) * (0.7 + 0.3 * priority), 2)
+
+    action_map = {
+        "phishing": "Ne cliquez aucun lien — vérifiez l'expéditeur",
+        "ransomware": "Vérifiez vos sauvegardes et mettez à jour",
+        "malware": "Lancez une analyse antivirus complète",
+        "vuln": "Appliquez le correctif dès que disponible",
+        "data_leak": "Changez vos mots de passe & vérifiez haveibeenpwned",
+        "ddos": "Activez vos protections anti-DDoS",
+        "apt": "Alertez votre SOC et vérifiez vos accès",
+        "scam": "Ne communiquez aucune donnée personnelle",
+    }
+
+    enriched = []
+    for a in docs:
+        score = compute_score(a)
+        attack_type = a.get("attack_type") or a.get("threat_type") or "general"
+        actions = a.get("actions") or []
+        recommended = actions[0] if actions else action_map.get(attack_type, "Restez vigilant")
+        tldr = a.get("tldr")
+        if isinstance(tldr, list):
+            tldr = " ".join(tldr[:1]) if tldr else ""
+        enriched.append({
             "id": a.get("id", str(a.get("_id", ""))),
             "title": a.get("title", ""),
-            "attack_type": a.get("attack_type", a.get("threat_type", "general")),
+            "attack_type": attack_type,
             "severity": a.get("severity", "moyen"),
-            "target": a.get("sector") or a.get("target"),
-            "impact_summary": a.get("impact_summary") or a.get("impact"),
+            "target": a.get("sector") or a.get("target") or a.get("impact") or "Tous utilisateurs",
+            "impact_summary": a.get("impact_summary") or tldr or a.get("impact", ""),
+            "recommended_action": recommended,
+            "recommended_actions": actions[:3] if actions else [recommended],
             "source": a.get("source", ""),
+            "country": a.get("country", "US"),
             "published_at": a.get("published_at"),
-            "score": a.get("score", 50),
+            "score": score,
         })
+
+    enriched.sort(key=lambda x: x["score"], reverse=True)
+    top = enriched[:limit]
     return {"threats": top, "count": len(top)}

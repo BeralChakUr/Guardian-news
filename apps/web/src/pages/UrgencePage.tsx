@@ -15,6 +15,7 @@ import {
   Shield,
   HelpCircle,
 } from 'lucide-react';
+import RelatedArticlesBlock from '../components/RelatedArticlesBlock';
 
 // Emergency scenarios with symptoms for quick recognition (V3)
 const scenarios = [
@@ -445,6 +446,17 @@ export default function UrgencePage() {
             </div>
           );
         })}
+      </div>
+
+      {/* V4 - Critical alerts block */}
+      <div className="mt-8">
+        <RelatedArticlesBlock
+          title="Alertes critiques en cours"
+          description="Incidents de sévérité Critique détectés récemment"
+          filters={{ severity: 'critique' }}
+          limit={6}
+          testId="urgence-critical-alerts"
+        />
       </div>
 
       {/* Detail Modal */}
