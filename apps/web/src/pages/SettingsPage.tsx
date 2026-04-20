@@ -1,9 +1,17 @@
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { Globe, User, Info, Shield, ExternalLink } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import { getVersion } from '../services/newsService';
 
 export default function SettingsPage() {
   const { language, setLanguage, mode, setMode } = useAppStore();
+  const { data: versionInfo } = useQuery({
+    queryKey: ['app-version-settings'],
+    queryFn: getVersion,
+    staleTime: 24 * 60 * 60 * 1000,
+    retry: 1,
+  });
 
   return (
     <div className="pb-20 md:pb-0">
@@ -114,7 +122,9 @@ export default function SettingsPage() {
               </div>
               <div>
                 <p className="text-white font-medium">Guardian News</p>
-                <p className="text-sm text-slate-500">Version 2.0.0</p>
+                <p className="text-sm text-slate-500">
+                  Version {versionInfo?.version ?? '4.0.0'}
+                </p>
               </div>
             </div>
           </div>
