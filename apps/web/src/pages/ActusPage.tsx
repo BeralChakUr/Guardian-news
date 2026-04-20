@@ -3,7 +3,9 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { Search, Filter, X, RefreshCw, ChevronDown, Sparkles, Clock, Globe, Calendar } from 'lucide-react';
 import { getNews, getTension, getGroupedNews, type NewsItem } from '../services/newsService';
 import NewsCard from '../components/NewsCard';
+import NewsCardCompact from '../components/NewsCardCompact';
 import TensionBanner from '../components/TensionBanner';
+import FilterChips, { DEFAULT_FILTER_CHIPS } from '../components/FilterChips';
 
 const severityOptions = [
   { value: 'critique', label: 'Critique', color: 'bg-red-500/20 text-red-400 border-red-500/40' },
@@ -61,6 +63,24 @@ export default function ActusPage() {
   const [datePreset, setDatePreset] = useState<string>('');
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
+  const [quickFilter, setQuickFilter] = useState<string>('all');
+
+  // Apply quick filter preset (chips)
+  const handleQuickFilter = (id: string) => {
+    setQuickFilter(id);
+    // Reset granular filters so the chip drives the query
+    setSeverity(null);
+    setType(null);
+    setCountry('');
+    if (id === 'all') {
+      setViewMode('grouped');
+      return;
+    }
+    setViewMode('list');
+    if (id === 'urgence') setSeverity('critique'); // critique + eleve via OR would need backend change; pick critique
+    if (id === 'attaque') setType('ransomware'); // representative attack type
+    if (id === 'france') setCountry('FR');
+  };
 
   const filters = useMemo(() => ({
     severity: severity || undefined,
@@ -327,6 +347,11 @@ export default function ActusPage() {
         <TensionBanner tension={tension ?? null} loading={tensionLoading} />
       </div>
 
+      {/* V4 Quick Filter Chips */}
+      <div className="mb-4">
+        <FilterChips value={quickFilter} onChange={handleQuickFilter} />
+      </div>
+
       {/* View Mode Toggle */}
       <div className="mb-6 flex items-center gap-2">
         <button
@@ -555,7 +580,7 @@ export default function ActusPage() {
                 <>
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {news.map(item => (
-                      <NewsCard key={item.id} news={item} />
+                      <NewsCardCompact key={item.id} news={item} />
                     ))}
                   </div>
                   

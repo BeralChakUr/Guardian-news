@@ -38,8 +38,10 @@ import {
   Bar,
   Cell,
 } from 'recharts';
-import { getNews, getTension } from '../services/newsService';
+import { getNews, getTension, getDashboardSummary, getTopThreats } from '../services/newsService';
 import AIThreatSummaryReal from '../components/AIThreatSummaryReal';
+import KpiCard from '../components/KpiCard';
+import ThreatEvolutionChart from '../components/ThreatEvolutionChart';
 
 // Sidebar Navigation
 const navItems = [
@@ -121,6 +123,18 @@ export default function SimpleDashboard() {
     queryKey: ['news-dashboard'],
     queryFn: () => getNews(1, 50, {}),
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: summary } = useQuery({
+    queryKey: ['dashboard-summary-page'],
+    queryFn: getDashboardSummary,
+    staleTime: 60_000,
+  });
+
+  const { data: topThreats } = useQuery({
+    queryKey: ['top-threats-dashboard'],
+    queryFn: () => getTopThreats(3),
+    staleTime: 60_000,
   });
 
   const news = newsData?.items ?? [];
@@ -260,34 +274,83 @@ export default function SimpleDashboard() {
         </header>
 
         <div className="p-6 space-y-6">
-          {/* ==================== KPI CARDS ==================== */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <MetricCard
+          {/* ==================== V4 KPI CARDS ==================== */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" data-testid="kpi-cards">
+            <KpiCard
               icon={Activity}
-              value={tension ? `${tension.level} (${tension.score}/100)` : 'Chargement...'}
-              label="Niveau de Menace"
-              color={tension ? getThreatLevelColor(tension.score) as any : 'cyan'}
+              label="Niveau de menace"
+              value={tension ? `${tension.score}/100` : '—'}
+              hint={tension?.level || 'Calcul en cours'}
+              color={tension && tension.score >= 70 ? 'red' : tension && tension.score >= 40 ? 'orange' : 'emerald'}
+              testId="kpi-threat-level"
             />
-            <MetricCard
+            <KpiCard
               icon={AlertTriangle}
-              value={total}
-              label="Alertes Actives"
-              color="orange"
-              trend="+42% ce mois"
-            />
-            <MetricCard
-              icon={Bug}
-              value={criticalCount}
-              label="Vulnérabilités Critiques"
+              label="Alertes critiques"
+              value={summary?.kpis.critical_alerts ?? criticalCount}
+              hint={`${summary?.kpis.articles_today ?? 0} nouvelles aujourd'hui`}
               color="red"
+              testId="kpi-critical"
             />
-            <MetricCard
+            <KpiCard
+              icon={TrendingUp}
+              label="Articles 7j"
+              value={summary?.kpis.articles_7days ?? total}
+              hint={`${summary?.kpis.total_articles ?? total} au total`}
+              color="cyan"
+              testId="kpi-7days"
+            />
+            <KpiCard
               icon={Globe}
-              value="10+"
-              label="Sources Surveillées"
-              color="green"
+              label="Sources actives"
+              value={summary?.kpis.active_sources ?? 11}
+              hint={summary?.kpis.most_targeted_sector ? `Secteur le plus ciblé : ${summary.kpis.most_targeted_sector}` : 'OSINT surveillées'}
+              color="emerald"
+              testId="kpi-sources"
             />
           </div>
+
+          {/* ==================== TOP 3 THREATS ==================== */}
+          {topThreats && topThreats.threats.length > 0 && (
+            <div className="rounded-2xl border border-slate-800 bg-[#0D1B2A] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-bold text-white flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-orange-400" />
+                    Top 3 menaces du jour
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Classées par gravité et récence</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {topThreats.threats.map((t, idx) => {
+                  const sevColor = t.severity === 'critique' ? 'border-red-500/40 bg-red-500/5' : t.severity === 'eleve' ? 'border-orange-500/40 bg-orange-500/5' : 'border-yellow-500/40 bg-yellow-500/5';
+                  return (
+                    <Link
+                      key={t.id}
+                      to={`/dashboard/news/${t.id}`}
+                      className={`group rounded-xl border ${sevColor} p-3 transition-all hover:border-cyan-500/40`}
+                      data-testid={`dashboard-top-threat-${idx}`}
+                    >
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="flex h-5 w-5 items-center justify-center rounded bg-white/10 text-[10px] font-bold text-white">
+                          {idx + 1}
+                        </span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-300">
+                          {t.severity}
+                        </span>
+                        <span className="ml-auto text-[10px] text-slate-500">{t.source}</span>
+                      </div>
+                      <p className="text-sm text-white line-clamp-2 leading-snug">{t.title}</p>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ==================== THREAT EVOLUTION CHART (24h/7d/30d) ==================== */}
+          <ThreatEvolutionChart />
 
           {/* ==================== AI SUMMARY SECTION ==================== */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

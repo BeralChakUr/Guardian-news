@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Shield, Menu, X, LayoutDashboard, Newspaper, Settings } from 'lucide-react';
 import { useState } from 'react';
 import HeroSection from '../components/home/HeroSection';
+import SituationOfTheDay from '../components/home/SituationOfTheDay';
 import ThreatLevelCard from '../components/home/ThreatLevelCard';
 import DailyAlerts from '../components/home/DailyAlerts';
 import AIAnalysisCard from '../components/home/AIAnalysisCard';
@@ -121,6 +122,7 @@ export default function HomePage() {
       
       <main className="pt-16">
         <HeroSection />
+        <SituationOfTheDay />
         <ThreatLevelCard />
         <DailyAlerts />
         <AIAnalysisCard />

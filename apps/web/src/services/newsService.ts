@@ -172,3 +172,66 @@ export interface VersionInfo {
 export async function getVersion(): Promise<VersionInfo> {
   return apiRequest<VersionInfo>('/api/dashboard/version');
 }
+
+// V4 - Dashboard Summary (KPIs)
+export interface DashboardSummary {
+  kpis: {
+    total_articles: number;
+    critical_alerts: number;
+    active_sources: number;
+    most_targeted_sector: string | null;
+    articles_today: number;
+    articles_7days: number;
+  };
+  tension_level: string;
+  tension_score: number;
+  last_updated: string;
+}
+
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  return apiRequest<DashboardSummary>('/api/dashboard/summary');
+}
+
+// V4 - Top Threats
+export interface TopThreat {
+  id: string;
+  title: string;
+  attack_type: string;
+  severity: string;
+  target?: string | null;
+  impact_summary?: string | null;
+  source: string;
+  published_at: string;
+  score: number;
+}
+
+export interface TopThreatsResponse {
+  threats: TopThreat[];
+  count: number;
+}
+
+export async function getTopThreats(limit: number = 3): Promise<TopThreatsResponse> {
+  return apiRequest<TopThreatsResponse>(`/api/dashboard/top-threats?limit=${limit}`);
+}
+
+// V4 - Timeline by Period (24h / 7d / 30d)
+export interface TimelineBucket {
+  date: string;
+  count: number;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+}
+
+export interface TimelinePeriodResponse {
+  period: string;
+  data: TimelineBucket[];
+  total: number;
+}
+
+export async function getTimelineByPeriod(
+  period: '24h' | '7d' | '30d' = '7d'
+): Promise<TimelinePeriodResponse> {
+  return apiRequest<TimelinePeriodResponse>(`/api/dashboard/timeline/${period}`);
+}
