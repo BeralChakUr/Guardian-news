@@ -30,35 +30,39 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="group relative overflow-hidden rounded-xl bg-slate-800/30 border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300"
+      className="group flex h-[320px] flex-col overflow-hidden rounded-xl bg-slate-800/30 border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300"
     >
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${severity.bg} ${severity.text}`}>
+      <div className="flex-1 min-h-0 flex flex-col p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 mb-3 shrink-0">
+          <span className={`px-2.5 py-1 rounded-full text-xs font-medium shrink-0 ${severity.bg} ${severity.text}`}>
             {severity.label}
           </span>
-          <span className="text-xs text-slate-500 flex items-center gap-1">
+          <span className="text-xs text-slate-500 flex items-center gap-1 shrink-0">
             <Clock className="w-3 h-3" />
-            {new Date(item.published_at).toLocaleDateString('fr-FR')}
+            {new Date(item.published_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
           </span>
         </div>
-        
-        <h3 className="text-white font-semibold mb-2 line-clamp-2 group-hover:text-cyan-400 transition-colors">
+
+        {/* Title — clamp 3 lines */}
+        <h3 className="text-white font-semibold mb-3 line-clamp-3 break-words group-hover:text-cyan-400 transition-colors leading-snug">
           {item.title}
         </h3>
-        
-        <p className="text-sm text-slate-400 mb-4 line-clamp-2">{summary}</p>
-        
-        <div className="flex items-center justify-between pt-3 border-t border-slate-700/50">
-          <span className="text-xs text-cyan-400 font-medium">{item.source}</span>
-          <Link
-            to={`/dashboard/news/${item.id}`}
-            className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-cyan-400 transition-colors"
-          >
-            Lire
-            <ExternalLink className="w-3 h-3" />
-          </Link>
-        </div>
+
+        {/* Description — clamp 2 lines */}
+        <p className="text-sm text-slate-400 line-clamp-2 break-words leading-relaxed">{summary}</p>
+      </div>
+
+      {/* Footer — pinned */}
+      <div className="flex items-center justify-between px-5 py-3 border-t border-slate-700/50 shrink-0 gap-2">
+        <span className="text-xs text-cyan-400 font-medium truncate min-w-0 flex-1">{item.source}</span>
+        <Link
+          to={`/dashboard/news/${item.id}`}
+          className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-cyan-400 transition-colors shrink-0"
+        >
+          Lire
+          <ExternalLink className="w-3 h-3" />
+        </Link>
       </div>
     </motion.div>
   );
@@ -117,9 +121,9 @@ export default function RecentNews() {
         </div>
 
         {isLoading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-52 rounded-xl bg-slate-800/50 animate-pulse" />
+              <div key={i} className="h-[320px] rounded-xl bg-slate-800/50 animate-pulse" />
             ))}
           </div>
         ) : isError ? (
@@ -128,7 +132,7 @@ export default function RecentNews() {
             <p className="text-slate-400">Actualités indisponibles</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             {data?.items.slice(0, 6).map((item, index) => (
               <NewsCard key={item.id} item={item} index={index} />
             ))}

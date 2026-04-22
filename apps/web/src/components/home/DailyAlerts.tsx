@@ -104,7 +104,7 @@ function AlertsSection({ title, icon, items, emptyMessage, countryFilter }: Aler
           <p className="text-slate-400">{emptyMessage}</p>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
           {items.slice(0, 3).map((item, index) => (
             <AlertCard key={item.id} item={item} index={index} />
           ))}
@@ -148,12 +148,12 @@ export default function DailyAlerts() {
 
         {isLoading ? (
           <div className="space-y-8">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-48 rounded-xl bg-slate-800/50 animate-pulse" />
               ))}
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-48 rounded-xl bg-slate-800/50 animate-pulse" />
               ))}

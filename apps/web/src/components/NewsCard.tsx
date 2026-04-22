@@ -21,18 +21,13 @@ const severityLabels: Record<string, string> = {
   faible: 'Faible',
 };
 
-// Country flag mapping
 const countryFlags: Record<string, string> = {
-  FR: '🇫🇷',
-  US: '🇺🇸',
-  GB: '🇬🇧',
-  DE: '🇩🇪',
-  EU: '🇪🇺',
+  FR: '🇫🇷', US: '🇺🇸', GB: '🇬🇧', DE: '🇩🇪', EU: '🇪🇺',
 };
 
 export default function NewsCard({ news }: NewsCardProps) {
   const { favorites, readLater, addFavorite, removeFavorite, addReadLater, removeReadLater } = useAppStore();
-  
+
   const isFavorite = favorites.includes(news.id);
   const isReadLater = readLater.includes(news.id);
 
@@ -46,83 +41,97 @@ export default function NewsCard({ news }: NewsCardProps) {
     isReadLater ? removeReadLater(news.id) : addReadLater(news.id);
   };
 
-  // Get severity style safely
   const severityStyle = severityStyles[news.severity] || severityStyles.faible;
   const severityLabel = severityLabels[news.severity] || news.severity;
   const countryFlag = countryFlags[news.country || 'US'] || '🌍';
 
+  const tldrItems = Array.isArray(news.tldr) ? news.tldr : news.tldr ? [news.tldr] : [];
+  const firstTldr = tldrItems[0] || news.content?.substring(0, 160) || '';
+
   return (
-    <article className="group rounded-2xl border border-gray-800 bg-cyber-surface p-5 transition-all hover:border-cyber-primary/50 hover:bg-cyber-elevated">
-      {/* Header */}
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-base" title={news.country === 'FR' ? 'France' : 'International'}>{countryFlag}</span>
-          <span className="text-sm font-medium text-cyber-secondary">{news.source}</span>
-          <span className="text-cyber-secondary">•</span>
-          <span className="text-sm text-gray-500">
-            {new Date(news.published_at).toLocaleDateString('fr-FR')}
+    <article
+      className="group flex h-[320px] flex-col rounded-2xl border border-gray-800 bg-cyber-surface p-5 transition-all hover:border-cyber-primary/50 hover:bg-cyber-elevated overflow-hidden"
+      data-testid="news-card"
+    >
+      {/* ===== HEADER (fixed) ===== */}
+      <header className="flex items-start justify-between gap-2 mb-3 shrink-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className="text-base shrink-0" title={news.country === 'FR' ? 'France' : 'International'}>
+            {countryFlag}
+          </span>
+          <span className="text-sm font-medium text-cyber-secondary truncate">{news.source}</span>
+          <span className="text-cyber-secondary shrink-0">•</span>
+          <span className="text-sm text-gray-500 shrink-0">
+            {new Date(news.published_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={handleReadLater}
-            className={`rounded-lg p-2 transition-colors ${
+            aria-label="À lire plus tard"
+            className={`rounded-lg p-1.5 transition-colors ${
               isReadLater ? 'bg-cyber-primary text-white' : 'text-gray-500 hover:bg-cyber-elevated hover:text-white'
             }`}
           >
-            <Bookmark className="h-4 w-4" fill={isReadLater ? 'currentColor' : 'none'} />
+            <Bookmark className="h-3.5 w-3.5" fill={isReadLater ? 'currentColor' : 'none'} />
           </button>
           <button
             onClick={handleFavorite}
-            className={`rounded-lg p-2 transition-colors ${
+            aria-label="Favori"
+            className={`rounded-lg p-1.5 transition-colors ${
               isFavorite ? 'bg-red-500/20 text-red-400' : 'text-gray-500 hover:bg-cyber-elevated hover:text-white'
             }`}
           >
-            <Heart className="h-4 w-4" fill={isFavorite ? 'currentColor' : 'none'} />
+            <Heart className="h-3.5 w-3.5" fill={isFavorite ? 'currentColor' : 'none'} />
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Tags - Only severity and threat_type, no level */}
-      <div className="mb-3 flex flex-wrap gap-2">
-        <span className={`rounded-full border px-3 py-1 text-xs font-medium ${severityStyle}`}>
-          {severityLabel}
-        </span>
-        {news.threat_type && (
-          <span className="rounded-full px-3 py-1 text-xs font-medium bg-cyber-elevated text-cyber-secondary">
-            {news.threat_type}
+      {/* ===== CONTENT (flexible - grows) ===== */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {/* Tags */}
+        <div className="mb-3 flex flex-wrap gap-2 shrink-0">
+          <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${severityStyle}`}>
+            {severityLabel}
           </span>
+          {news.threat_type && (
+            <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium bg-cyber-elevated text-cyber-secondary capitalize">
+              {news.threat_type}
+            </span>
+          )}
+        </div>
+
+        {/* Title */}
+        <Link to={`/dashboard/news/${news.id}`} className="mb-3 shrink-0">
+          <h3 className="text-base font-bold text-white transition-colors group-hover:text-cyber-primary line-clamp-3 break-words leading-snug">
+            {news.title}
+          </h3>
+        </Link>
+
+        {/* TL;DR */}
+        {firstTldr && (
+          <div className="flex items-start gap-2 min-h-0">
+            <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyber-primary" />
+            <p className="text-xs text-cyber-secondary line-clamp-2 break-words leading-relaxed">
+              {firstTldr}
+            </p>
+          </div>
         )}
       </div>
 
-      {/* Title */}
-      <Link to={`/dashboard/news/${news.id}`}>
-        <h3 className="mb-3 text-lg font-bold text-white transition-colors group-hover:text-cyber-primary">
-          {news.title}
-        </h3>
-      </Link>
-
-      {/* TL;DR */}
-      <div className="mb-4 space-y-1">
-        {(Array.isArray(news.tldr) ? news.tldr : [news.tldr]).slice(0, 2).map((item, i) => (
-          <div key={i} className="flex items-start gap-2">
-            <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-cyber-primary" />
-            <p className="text-sm text-cyber-secondary line-clamp-1">{item}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between border-t border-gray-800 pt-4">
-        <span className="text-xs text-gray-500">{news.impact}</span>
+      {/* ===== FOOTER (fixed at bottom) ===== */}
+      <footer className="mt-3 flex items-center justify-between border-t border-gray-800 pt-3 shrink-0 gap-2">
+        <span className="text-[11px] text-gray-500 truncate min-w-0 flex-1">
+          {news.impact || 'Utilisateurs concernés'}
+        </span>
         <Link
           to={`/dashboard/news/${news.id}`}
-          className="flex items-center gap-1 text-sm font-medium text-cyber-primary hover:underline"
+          className="flex items-center gap-1 text-xs font-medium text-cyber-primary hover:underline shrink-0"
         >
           Voir plus
           <ExternalLink className="h-3 w-3" />
         </Link>
-      </div>
+      </footer>
     </article>
   );
 }

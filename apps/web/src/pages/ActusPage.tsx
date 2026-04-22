@@ -320,7 +320,7 @@ export default function ActusPage() {
           <p className="text-cyber-secondary">Aucune actualité disponible</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
           {items.map(item => (
             <NewsCard key={item.id} news={item} />
           ))}
@@ -493,7 +493,7 @@ export default function ActusPage() {
             <>
               {groupedLoading ? (
                 <div className="space-y-8">
-                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
                     {[1, 2, 3].map(i => (
                       <div key={i} className="animate-pulse rounded-2xl bg-cyber-surface p-5">
                         <div className="h-4 w-24 rounded bg-cyber-elevated mb-3" />
@@ -543,7 +543,7 @@ export default function ActusPage() {
           {!showGroupedView && (
             <>
               {isLoading ? (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
                   {[1, 2, 3, 4, 5, 6].map(i => (
                     <div key={i} className="animate-pulse rounded-2xl bg-cyber-surface p-5">
                       <div className="h-4 w-24 rounded bg-cyber-elevated mb-3" />
@@ -578,7 +578,7 @@ export default function ActusPage() {
                 </div>
               ) : (
                 <>
-                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
                     {news.map(item => (
                       <NewsCardCompact key={item.id} news={item} />
                     ))}
