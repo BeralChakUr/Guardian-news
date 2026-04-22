@@ -197,6 +197,46 @@ class RSSFetcherService:
         tldr = self.generate_tldr(raw["title"], raw["content"])
         actions = self.generate_actions(threat_type, severity)
         impact = "Tous les utilisateurs" if severity in [Severity.CRITIQUE, Severity.ELEVE] else "Utilisateurs concernés"
+
+        # V4 enrichment
+        from ..core.config import SEVERITY_WEIGHTS, SOURCE_RELIABILITY
+        sev_weight = SEVERITY_WEIGHTS.get(severity.value, 2)
+        reliability = SOURCE_RELIABILITY.get(raw["source"], 0.7)
+        priority = raw.get("priority", 50) / 100.0
+        # Recency factor (always 1.0 at ingestion since article just fetched)
+        score = round(sev_weight * 20 * (0.5 + 0.5 * reliability) * (0.7 + 0.3 * priority), 2)
+
+        # Infer target (sector/audience)
+        text_lower = (raw["title"] + " " + raw["content"]).lower()
+        target = None
+        sector_keywords = {
+            "Santé": ["hospital", "health", "hôpital", "medic", "santé"],
+            "Finance": ["bank", "finance", "payment", "credit card", "banque"],
+            "Administration": ["government", "municipal", "gouvernement", "mairie", "administration"],
+            "Éducation": ["school", "university", "université", "école", "education"],
+            "Industrie": ["manufactur", "industrial", "ics", "scada", "usine"],
+            "Énergie": ["energy", "power grid", "électri", "énergie"],
+            "Transport": ["airline", "airport", "transport", "aérien"],
+            "Télécom": ["telecom", "isp", "télécom", "operator"],
+            "PME": ["small business", "sme", "pme", "tpe"],
+        }
+        for sector, kws in sector_keywords.items():
+            if any(k in text_lower for k in kws):
+                target = sector
+                break
+        if target is None:
+            target = "Particuliers" if severity == Severity.FAIBLE else "Tous utilisateurs"
+
+        # Impact summary (1-line French)
+        impact_summary = tldr[0] if tldr else raw["title"]
+        if len(impact_summary) > 200:
+            impact_summary = impact_summary[:197] + "…"
+
+        # Dedup hash: title normalized + source
+        import hashlib
+        norm_title = "".join(c.lower() for c in raw["title"] if c.isalnum())[:100]
+        dedup_hash = hashlib.sha256((norm_title + raw["source"]).encode()).hexdigest()[:16]
+
         return NewsArticle(
             title=raw["title"], source=raw["source"], source_score=raw["source_score"],
             url=raw["url"], published_at=raw["published_at"],
@@ -208,6 +248,13 @@ class RSSFetcherService:
             language=raw.get("language", "en"),
             priority=raw.get("priority", 50),
             attack_type=threat_type.value,
+            # V4 enrichment fields
+            score=score,
+            dedup_hash=dedup_hash,
+            impact_summary=impact_summary,
+            target=target,
+            sector=target if target in ["Santé", "Finance", "Administration", "Éducation",
+                                         "Industrie", "Énergie", "Transport", "Télécom", "PME"] else None,
         )
 
     async def run_ingestion(self) -> int:
