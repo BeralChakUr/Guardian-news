@@ -639,7 +639,302 @@ const INCIDENT_DEFACEMENT: IncidentType = {
   ],
 };
 
-export const INCIDENTS: IncidentType[] = [INCIDENT_MAIL, INCIDENT_RANSOMWARE, INCIDENT_DEFACEMENT];
+// ─────────────────── INCIDENT 4 : DÉNI DE SERVICE / DDoS ───────────────────
+
+const INCIDENT_DDOS: IncidentType = {
+  id: 'ddos',
+  title: 'Déni de service réseau (DDoS)',
+  shortTitle: 'Déni de service',
+  category: 'Disponibilité',
+  icon: 'Activity',
+  severityDefault: 'mineur',
+  symptoms: [
+    'Sites ou services lents ou inaccessibles',
+    'Pic de trafic anormal sur un service exposé',
+    'Erreurs HTTP 5xx en masse',
+    'Saturation du lien Internet ou du pare-feu',
+    'Alertes du FAI ou de l\'hébergeur',
+  ],
+  immediateAction:
+    "Identifiez le service impacté et contactez votre FAI / hébergeur / CDN pour activer les protections anti-DDoS. Préservez les logs.",
+  situationQuestions: SITUATION_QUESTIONS,
+  generalQuestions: GENERAL_QUESTIONS,
+  specificQuestions: [
+    {
+      id: 'ddos_active',
+      label: 'L\'attaque est-elle toujours en cours ?',
+      type: 'yesno',
+      required: true,
+    },
+    {
+      id: 'ddos_target',
+      label: 'Quel(s) service(s) sont impactés ?',
+      type: 'choice',
+      options: [
+        { value: 'web', label: 'Site web / application web' },
+        { value: 'api', label: 'API / services backend' },
+        { value: 'dns', label: 'DNS' },
+        { value: 'network', label: 'Réseau / lien Internet entier' },
+        { value: 'multi', label: 'Plusieurs services simultanément' },
+      ],
+      required: true,
+    },
+    {
+      id: 'ddos_volume',
+      label: 'Volume estimé de l\'attaque ?',
+      type: 'choice',
+      options: [
+        { value: 'low', label: 'Faible — service ralenti' },
+        { value: 'medium', label: 'Important — service partiellement indispo' },
+        { value: 'saturating', label: 'Saturant — service totalement KO' },
+        { value: 'unknown', label: 'Inconnu / pas de visibilité' },
+      ],
+      required: true,
+    },
+    {
+      id: 'ddos_protection',
+      label: 'Disposez-vous d\'une protection anti-DDoS ?',
+      type: 'choice',
+      options: [
+        { value: 'yes_active', label: 'Oui, déjà active' },
+        { value: 'yes_dormant', label: 'Oui mais non activée' },
+        { value: 'no', label: 'Non' },
+        { value: 'unknown', label: 'Inconnu' },
+      ],
+    },
+    {
+      id: 'ddos_provider_contacted',
+      label: 'FAI / hébergeur / CDN ont-ils été contactés ?',
+      type: 'yesno',
+    },
+  ],
+  baseActions: [
+    'Contacter immédiatement FAI / hébergeur / CDN',
+    'Activer les protections anti-DDoS si dormantes',
+    'Identifier les discriminants (IP sources, user-agents, signatures)',
+    'Mettre en place rate limiting / traffic shaping',
+    'Préserver les logs (pare-feu, WAF, accès web, métriques réseau)',
+    'Communiquer aux utilisateurs sur l\'indisponibilité',
+  ],
+  resultRules: [
+    {
+      when: [{ questionId: 'ddos_volume', equals: 'saturating' }, { questionId: 'activity_state', equals: 'stopped' }],
+      level: 'crise',
+      reasons: ['Activité totalement arrêtée par l\'attaque DDoS'],
+      priority: 95,
+    },
+    {
+      when: [{ questionId: 'ddos_volume', equals: 'saturating' }],
+      level: 'majeur',
+      reasons: ['Volume saturant : service complètement indisponible'],
+      priority: 80,
+    },
+    {
+      when: [{ questionId: 'ddos_target', equals: 'network' }],
+      level: 'majeur',
+      reasons: ['Lien Internet entier impacté : tous les services dégradés'],
+      priority: 75,
+    },
+    {
+      when: [{ questionId: 'ddos_target', equals: 'multi' }],
+      level: 'majeur',
+      reasons: ['Plusieurs services impactés simultanément'],
+      priority: 70,
+    },
+    {
+      when: [{ questionId: 'ddos_active', equals: 'true' }],
+      level: 'mineur',
+      reasons: ['Attaque DDoS active — surveillance continue requise'],
+      priority: 30,
+    },
+  ],
+  obligations: [
+    {
+      id: 'plainte_ddos',
+      label: 'Dépôt de plainte',
+      description:
+        'Le déni de service constitue une atteinte à un STAD (art. 323-2 du Code pénal). Conservez les preuves et déposez plainte.',
+      authority: 'POLICE',
+    },
+    {
+      id: 'assurance_ddos',
+      label: 'Notifier l\'assurance cyber',
+      description: 'Les pertes liées à l\'indisponibilité peuvent être couvertes (perte d\'exploitation).',
+      trigger: { questionId: 'cyber_insurance', equals: 'true' },
+      authority: 'ASSURANCE',
+    },
+    {
+      id: 'anssi_ddos',
+      label: 'Notification ANSSI / régulateur',
+      description: 'OIV/OSE/NIS2 : signalement obligatoire si impact significatif sur la continuité de service.',
+      trigger: { questionId: 'organization_type', equals: ['oiv', 'public'] },
+      authority: 'ANSSI',
+    },
+  ],
+  usefulLinks: [
+    { label: 'Cybermalveillance — DDoS', url: 'https://www.cybermalveillance.gouv.fr/tous-nos-contenus/fiches-reflexes/deni-de-service' },
+    { label: 'ANSSI — Guide DDoS', url: 'https://cyber.gouv.fr/publications/comprendre-et-anticiper-les-attaques-ddos' },
+  ],
+};
+
+// ─────────────────── INCIDENT 5 : COMPROMISSION SYSTÈME ───────────────────
+
+const INCIDENT_SYSTEM: IncidentType = {
+  id: 'system_compromise',
+  title: 'Compromission d\'un système / serveur',
+  shortTitle: 'Compromission système',
+  category: 'Compromission',
+  icon: 'Server',
+  severityDefault: 'majeur',
+  symptoms: [
+    'Activité réseau anormale sortante depuis un serveur',
+    'Processus inconnus ou EDR/AV en alerte',
+    'Modifications de fichiers système ou de tâches planifiées',
+    'Comptes inconnus ou élévation de privilèges',
+    'Logs effacés ou chiffrés',
+  ],
+  immediateAction:
+    "Isolez la machine du réseau (sans l'éteindre brutalement) pour préserver la mémoire. N'ouvrez PAS de session interactive avec un compte privilégié.",
+  situationQuestions: SITUATION_QUESTIONS,
+  generalQuestions: GENERAL_QUESTIONS,
+  specificQuestions: [
+    {
+      id: 'sys_critical_role',
+      label: 'La machine compromise a-t-elle un rôle critique ?',
+      type: 'choice',
+      options: [
+        { value: 'dc', label: 'Contrôleur de domaine (AD)' },
+        { value: 'critical_server', label: 'Serveur applicatif critique' },
+        { value: 'workstation', label: 'Poste utilisateur' },
+        { value: 'unknown', label: 'Indéterminé' },
+      ],
+      required: true,
+    },
+    {
+      id: 'sys_admin_compromised',
+      label: 'Un compte à privilèges (admin local, admin domaine) est-il suspecté compromis ?',
+      type: 'yesno',
+      required: true,
+    },
+    {
+      id: 'sys_lateral',
+      label: 'Avez-vous observé des mouvements latéraux ou d\'autres machines impactées ?',
+      type: 'yesno',
+      required: true,
+    },
+    {
+      id: 'sys_persistence',
+      label: 'Des mécanismes de persistance ont-ils été identifiés (services, tâches, registres) ?',
+      type: 'yesno',
+    },
+    {
+      id: 'sys_data_access',
+      label: 'Des données sensibles sont-elles accessibles depuis cette machine ?',
+      type: 'choice',
+      options: [
+        { value: 'yes_critical', label: 'Oui, données critiques (BDD, secrets, RH...)' },
+        { value: 'yes_standard', label: 'Oui, données standard' },
+        { value: 'no', label: 'Non' },
+        { value: 'unknown', label: 'Inconnu' },
+      ],
+      required: true,
+    },
+    {
+      id: 'sys_logs_preserved',
+      label: 'Les journaux de la machine sont-ils intacts ?',
+      type: 'choice',
+      options: [
+        { value: 'yes', label: 'Oui' },
+        { value: 'partial', label: 'Partiellement' },
+        { value: 'wiped', label: 'Effacés ou inaccessibles' },
+        { value: 'unknown', label: 'Inconnu' },
+      ],
+    },
+  ],
+  baseActions: [
+    'Isoler la machine compromise sans l\'éteindre brutalement',
+    'NE PAS ouvrir de session interactive locale, RDP ou SSH avec un compte privilégié',
+    'Préserver la mémoire (snapshot VM ou hibernation Windows)',
+    'Identifier les comptes à privilèges utilisés récemment et les désactiver',
+    'Réinitialiser les mots de passe / clés / certificats présents sur la machine',
+    'Préserver les journaux (pare-feu, EDR, antivirus, AD)',
+    'Vérifier les sauvegardes et leur intégrité',
+  ],
+  resultRules: [
+    {
+      when: [{ questionId: 'sys_critical_role', equals: 'dc' }],
+      level: 'crise',
+      reasons: ['Contrôleur de domaine compromis : risque de propagation à tout le SI'],
+      priority: 100,
+    },
+    {
+      when: [{ questionId: 'sys_lateral', equals: 'true' }],
+      level: 'crise',
+      reasons: ['Mouvements latéraux confirmés : compromission étendue'],
+      priority: 95,
+    },
+    {
+      when: [{ questionId: 'sys_admin_compromised', equals: 'true' }],
+      level: 'majeur',
+      reasons: ['Compte à privilèges compromis : risque d\'escalade'],
+      priority: 85,
+    },
+    {
+      when: [{ questionId: 'sys_data_access', equals: 'yes_critical' }],
+      level: 'majeur',
+      reasons: ['Données critiques accessibles depuis la machine compromise'],
+      priority: 80,
+    },
+    {
+      when: [{ questionId: 'sys_logs_preserved', equals: 'wiped' }],
+      level: 'majeur',
+      reasons: ['Logs effacés : posture défensive sérieusement compromise'],
+      priority: 75,
+    },
+    {
+      when: [{ questionId: 'sys_critical_role', equals: 'critical_server' }],
+      level: 'majeur',
+      reasons: ['Serveur critique compromis : impact métier potentiel important'],
+      priority: 70,
+    },
+  ],
+  obligations: [
+    {
+      id: 'cnil_sys',
+      label: 'Notification CNIL (RGPD)',
+      description: 'Si des données personnelles sont accessibles depuis la machine compromise, déclencher la procédure CNIL sous 72h.',
+      trigger: { questionId: 'sys_data_access', equals: ['yes_critical', 'yes_standard'] },
+      deadlineHours: 72,
+      authority: 'CNIL',
+    },
+    {
+      id: 'plainte_sys',
+      label: 'Dépôt de plainte',
+      description: 'Atteinte à un STAD. Conservez les preuves (snapshots, logs) et déposez plainte.',
+      authority: 'POLICE',
+    },
+    {
+      id: 'assurance_sys',
+      label: 'Notifier l\'assurance cyber',
+      description: 'Couverture possible pour la réponse à incident et la remédiation.',
+      trigger: { questionId: 'cyber_insurance', equals: 'true' },
+      authority: 'ASSURANCE',
+    },
+    {
+      id: 'anssi_sys',
+      label: 'Notification ANSSI / régulateur',
+      description: 'OIV/OSE/NIS2 : signalement obligatoire en cas de compromission significative.',
+      trigger: { questionId: 'organization_type', equals: ['oiv', 'public'] },
+      authority: 'ANSSI',
+    },
+  ],
+  usefulLinks: [
+    { label: 'Cybermalveillance — Intrusion système', url: 'https://www.cybermalveillance.gouv.fr/tous-nos-contenus/fiches-reflexes/intrusion-systeme-information' },
+    { label: 'ANSSI — Réponse aux incidents', url: 'https://cyber.gouv.fr/publications/cybersecurite-faire-face-la-menace' },
+  ],
+};
+
+export const INCIDENTS: IncidentType[] = [INCIDENT_MAIL, INCIDENT_RANSOMWARE, INCIDENT_DEFACEMENT, INCIDENT_DDOS, INCIDENT_SYSTEM];
 
 export const SEVERITY_META: Record<SeverityLevel, { label: string; color: string; bg: string; border: string; description: string }> = {
   anomalie: {

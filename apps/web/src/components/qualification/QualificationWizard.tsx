@@ -6,6 +6,8 @@ import {
   Mail,
   Skull,
   Globe,
+  Activity,
+  Server,
   Shield,
   AlertCircle,
   Clock,
@@ -23,7 +25,7 @@ import {
 } from '../../data/incidentQualificationData';
 import { useMainCouranteStore } from '../../store/mainCouranteStore';
 
-const ICON_MAP: Record<string, typeof Mail> = { Mail, Skull, Globe };
+const ICON_MAP: Record<string, typeof Mail> = { Mail, Skull, Globe, Activity, Server };
 
 type Answers = Record<string, string | string[]>;
 
@@ -200,16 +202,22 @@ interface QualificationWizardProps {
   onIncidentSelected?: (incidentId: string) => void;
   /** Notifie le parent quand la qualification est terminée (utile pour basculer vers Endiguement) */
   onCompleted?: () => void;
+  /** Notifie le parent à chaque modification des réponses (utile pour Obligations) */
+  onAnswersChange?: (answers: Record<string, string | string[]>) => void;
 }
 
-export default function QualificationWizard({ onLogEvent, onIncidentSelected, onCompleted }: QualificationWizardProps) {
+export default function QualificationWizard({ onLogEvent, onIncidentSelected, onCompleted, onAnswersChange }: QualificationWizardProps) {
   const [stepIdx, setStepIdx] = useState(0);
   const [incident, setIncident] = useState<IncidentType | null>(null);
   const [answers, setAnswers] = useState<Answers>({});
   const addEntry = useMainCouranteStore((s) => s.addEntry);
 
   const setAnswer = (id: string, v: string | string[]) => {
-    setAnswers((prev) => ({ ...prev, [id]: v }));
+    setAnswers((prev) => {
+      const next = { ...prev, [id]: v };
+      onAnswersChange?.(next);
+      return next;
+    });
   };
 
   const result = useMemo(

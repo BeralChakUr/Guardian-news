@@ -18,6 +18,8 @@ export interface ContainmentPlaybook {
   severity: ContainmentSeverity;
   objective: string;
   priority_actions: PriorityActionGroup[];
+  /** Actions techniques additionnelles affichées en mode Analyste */
+  analyst_actions?: PriorityActionGroup[];
 }
 
 // Mapping IDs Qualification → IDs Endiguement
@@ -107,6 +109,44 @@ const PB_RANSOMWARE: ContainmentPlaybook = {
       category: 'evidence',
     },
   ],
+  analyst_actions: [
+    {
+      priority: 1,
+      title: 'Analyse forensique avancée',
+      actions: [
+        'Acquisition mémoire RAM (memdump) avant toute action sur la machine',
+        'Image disque bit-à-bit avec hashing (SHA256) pour preuve',
+        'Extraction des artefacts Windows : MFT, USN Journal, Prefetch, AmCache',
+        'Timeline forensique complète (Plaso/log2timeline)',
+        'Recherche d\'indicateurs de compromission (IOC) — hashes, IPs C2, domaines',
+      ],
+      category: 'forensics',
+    },
+    {
+      priority: 2,
+      title: 'Analyse Active Directory',
+      actions: [
+        'Audit DCSync, DCShadow, Golden/Silver tickets via BloodHound',
+        'Vérifier les ACL sur les objets sensibles (AdminSDHolder, GPO)',
+        'Inspecter NTDS.dit pour comptes orphelins ou dormants',
+        'Identifier les chemins d\'attaque (BloodHound, PingCastle)',
+        'Recherche de DCSync attempts dans event log 4662',
+      ],
+      category: 'identity_advanced',
+    },
+    {
+      priority: 3,
+      title: 'Threat hunting réseau',
+      actions: [
+        'Capture et analyse du trafic (Zeek/Suricata) sortant',
+        'Recherche de C2 connu : Cobalt Strike, Sliver, Mythic',
+        'Vérifier les DNS queries vers domaines DGA',
+        'Inspecter les connexions sortantes anormales (port 443, beaconing)',
+        'Bloquer les IOCs réseau au niveau pare-feu / proxy / EDR',
+      ],
+      category: 'threat_hunting',
+    },
+  ],
 };
 
 // ─────────────────── 2. COMPROMISSION MESSAGERIE ───────────────────
@@ -183,6 +223,31 @@ const PB_MAIL: ContainmentPlaybook = {
         'Conserver les IP, horaires, user-agents et événements MFA',
       ],
       category: 'evidence',
+    },
+  ],
+  analyst_actions: [
+    {
+      priority: 1,
+      title: 'Analyse approfondie des logs M365 / Google Workspace',
+      actions: [
+        'Audit Unified Audit Log (Microsoft 365) sur 90 jours',
+        'Recherche des UserLoggedIn anormaux (pays, ASN, navigateur)',
+        'Identification des MailItemsAccessed et SearchQueryInitiatedExchange',
+        'Vérifier les Inbox Rules malveillantes via Get-InboxRule',
+        'Recherche de tokens OAuth illégitimes (eM Client, application consent grant)',
+      ],
+      category: 'forensics',
+    },
+    {
+      priority: 2,
+      title: 'IOC et threat intel',
+      actions: [
+        'Hash et URL des pièces jointes envoyées (VirusTotal, Hybrid-Analysis)',
+        'Vérifier si l\'IP source est listée dans des feeds de threat intel',
+        'Recherche de patterns dans MISP / OpenCTI',
+        'Soumettre les IOCs au SOC ou CSIRT sectoriel',
+      ],
+      category: 'threat_intel',
     },
   ],
 };
@@ -273,6 +338,31 @@ const PB_DEFACEMENT: ContainmentPlaybook = {
       category: 'data_protection',
     },
   ],
+  analyst_actions: [
+    {
+      priority: 1,
+      title: 'Analyse de la chaîne d\'attaque',
+      actions: [
+        'Recherche d\'IOC dans les logs Apache/Nginx (UA inhabituels, headers Forwarded)',
+        'Inspection des fichiers PHP/JSP/ASP modifiés (webshells)',
+        'Diff entre version originale et altérée (git, hash)',
+        'Recherche de backdoors persistantes (cron, services, .htaccess)',
+        'Analyse de la base de données (injection SQL, tables modifiées)',
+      ],
+      category: 'forensics',
+    },
+    {
+      priority: 2,
+      title: 'WAF et durcissement',
+      actions: [
+        'Activer le WAF en mode bloquant (OWASP ModSecurity Core Rule Set)',
+        'Auditer les CMS plugins / themes pour CVE connues',
+        'Tester les endpoints avec OWASP ZAP / Burp',
+        'Mettre en place du DAST automatique',
+      ],
+      category: 'hardening',
+    },
+  ],
 };
 
 // ─────────────────── 4. DDoS ───────────────────
@@ -359,6 +449,32 @@ const PB_DDOS: ContainmentPlaybook = {
       category: 'evidence',
     },
   ],
+  analyst_actions: [
+    {
+      priority: 1,
+      title: 'Caractérisation de l\'attaque',
+      actions: [
+        'Identifier le vecteur (volumétrique, protocolaire, applicatif L7)',
+        'Capture pcap des requêtes pour analyse (tcpdump, Wireshark)',
+        'Identifier les patterns d\'amplification (DNS, NTP, memcached, SSDP)',
+        'Géolocalisation des IPs sources via MaxMind / IPinfo',
+        'Recherche d\'IOCs publics (réseaux botnet, ASN connus)',
+      ],
+      category: 'forensics',
+    },
+    {
+      priority: 2,
+      title: 'Mitigation avancée',
+      actions: [
+        'Configurer le scrubbing center (Akamai Prolexic, Arbor APS, Cloudflare Magic)',
+        'Tuning des règles BGP FlowSpec pour blackhole / sinkhole',
+        'Filtrage TCP-SYN cookies au niveau pare-feu',
+        'Activation des règles WAF L7 (rate limiting, captcha, JS challenge)',
+        'Ajustement des timeouts et keep-alive pour éviter slowloris',
+      ],
+      category: 'mitigation',
+    },
+  ],
 };
 
 // ─────────────────── 5. COMPROMISSION SYSTÈME ───────────────────
@@ -425,6 +541,44 @@ const PB_SYSTEM: ContainmentPlaybook = {
         "Préserver les journaux d'authentification",
       ],
       category: 'logs',
+    },
+  ],
+  analyst_actions: [
+    {
+      priority: 1,
+      title: 'Acquisition forensique sans contamination',
+      actions: [
+        'Acquisition mémoire vive (LiME, FTK Imager, WinPMem) avant tout',
+        'Image disque complète (E01) sur support hors-ligne',
+        'Calcul et conservation des hashs (SHA256) pour la chaîne de preuve',
+        'Préserver la VM via snapshot exporté au format OVA',
+        'Documenter horodatage, opérateur, outils utilisés',
+      ],
+      category: 'forensics',
+    },
+    {
+      priority: 2,
+      title: 'Analyse comportementale',
+      actions: [
+        'Recherche de processus / DLLs malveillantes (Volatility, Velociraptor)',
+        'Inspection des Run keys, Services, Scheduled Tasks (autoruns)',
+        'Analyse des connexions réseau (netstat, GetTcpConnections)',
+        'Vérifier les Event ID 4624/4625/4672 (logon, privilèges)',
+        'Recherche de techniques MITRE ATT&CK observées',
+      ],
+      category: 'behavior',
+    },
+    {
+      priority: 3,
+      title: 'Threat hunting infrastructure',
+      actions: [
+        'Pivoter sur les autres machines via les IOCs (hash, IP, domaine)',
+        'Sweep EDR sur toute la flotte',
+        'Recherche de comptes locaux suspects créés récemment',
+        'Audit des certificats clients et clés SSH dispersés sur le SI',
+        'Vérifier les GPO et scripts de logon AD',
+      ],
+      category: 'hunting',
     },
   ],
 };

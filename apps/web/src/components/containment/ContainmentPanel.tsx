@@ -10,6 +10,7 @@ import {
   Check,
   ArrowRight,
   RotateCcw,
+  Microscope,
 } from 'lucide-react';
 import {
   CONTAINMENT_PLAYBOOKS,
@@ -21,6 +22,7 @@ import {
   type ContainmentSeverity,
 } from '../../data/containmentPlaybooks';
 import { useMainCouranteStore } from '../../store/mainCouranteStore';
+import { useCentreOpStore } from '../../store/centreOpStore';
 
 const ICON_MAP: Record<string, typeof Skull> = {
   ransomware: Skull,
@@ -58,9 +60,10 @@ export default function ContainmentPanel({ inheritedIncidentType }: Props) {
   }, [inheritedIncidentType]);
 
   const [selectedId, setSelectedId] = useState<string | null>(initialId);
-  // Cases cochées par action (clé = `${groupIndex}:${actionIndex}`)
+  // Cases cochées par action (clé = `${groupIndex}:${actionIndex}` pour priority_actions, `analyst:${gIdx}:${aIdx}` pour analyst_actions)
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const addEntry = useMainCouranteStore((s) => s.addEntry);
+  const mode = useCentreOpStore((s) => s.mode);
 
   // Hérite si Qualification met à jour le choix
   useEffect(() => {
@@ -78,14 +81,14 @@ export default function ContainmentPanel({ inheritedIncidentType }: Props) {
   const doneCount = Object.values(checked).filter(Boolean).length;
   const progress = totalActions > 0 ? Math.round((doneCount / totalActions) * 100) : 0;
 
-  const toggle = (gIdx: number, aIdx: number, action: string, group: string) => {
-    const key = `${gIdx}:${aIdx}`;
+  const toggle = (gIdx: number, aIdx: number, action: string, group: string, isAnalyst = false) => {
+    const key = isAnalyst ? `analyst:${gIdx}:${aIdx}` : `${gIdx}:${aIdx}`;
     setChecked((prev) => {
       const next = { ...prev, [key]: !prev[key] };
       // Si on coche (passage false→true), on log dans la main courante
       if (!prev[key]) {
         addEntry({
-          author: 'Endiguement',
+          author: isAnalyst ? 'Endiguement (Analyste)' : 'Endiguement',
           description: `✓ ${action}`,
           scope: group,
           auto: true,
@@ -293,6 +296,95 @@ export default function ContainmentPanel({ inheritedIncidentType }: Props) {
           );
         })}
       </div>
+
+      {/* Actions techniques additionnelles (mode Analyste) */}
+      {mode === 'analyst' && playbook.analyst_actions && playbook.analyst_actions.length > 0 && (
+        <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-indigo-500/5 p-4">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="rounded-lg bg-purple-500/20 text-purple-300 p-2 shrink-0 border border-purple-500/40">
+              <Microscope className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider mb-1">
+                Mode Analyste
+              </div>
+              <h3 className="text-base font-semibold text-white leading-snug">
+                Actions techniques avancées
+              </h3>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                Ces étapes complémentaires s'adressent aux analystes SOC/CSIRT pour l'investigation
+                forensique, le threat hunting et la mitigation avancée.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3 ml-12">
+            {playbook.analyst_actions.map((group, gIdx) => {
+              const cat = CATEGORY_META[group.category];
+              const groupDone = group.actions.filter(
+                (_, aIdx) => checked[`analyst:${gIdx}:${aIdx}`]
+              ).length;
+              return (
+                <div
+                  key={`analyst-${gIdx}`}
+                  className="rounded-xl border border-purple-500/20 bg-slate-900/40 p-3"
+                >
+                  <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      {cat && (
+                        <span className="inline-block rounded-md bg-slate-800 text-slate-300 px-2 py-0.5 text-[10px] font-medium mr-2 mb-1">
+                          {cat.label}
+                        </span>
+                      )}
+                      <h4 className="text-sm font-semibold text-white">{group.title}</h4>
+                    </div>
+                    <span className="text-xs text-slate-400 shrink-0">
+                      {groupDone} / {group.actions.length}
+                    </span>
+                  </div>
+                  <ul className="space-y-1">
+                    {group.actions.map((action, aIdx) => {
+                      const key = `analyst:${gIdx}:${aIdx}`;
+                      const isDone = checked[key];
+                      return (
+                        <li key={key}>
+                          <button
+                            type="button"
+                            onClick={() => toggle(gIdx, aIdx, action, `[Analyste] ${group.title}`, true)}
+                            className={`w-full flex items-start gap-2.5 rounded-lg border px-2.5 py-1.5 text-left transition-all ${
+                              isDone
+                                ? 'border-purple-500/40 bg-purple-500/10'
+                                : 'border-slate-700/40 bg-slate-800/30 hover:border-purple-500/40'
+                            }`}
+                            data-testid={`analyst-action-${gIdx}-${aIdx}`}
+                          >
+                            <div
+                              className={`mt-0.5 h-4 w-4 rounded border flex items-center justify-center shrink-0 ${
+                                isDone
+                                  ? 'bg-purple-500 border-purple-500'
+                                  : 'border-slate-600 bg-slate-900/60'
+                              }`}
+                            >
+                              {isDone && <Check className="h-3 w-3 text-slate-900" />}
+                            </div>
+                            <span
+                              className={`text-xs leading-snug break-words ${
+                                isDone ? 'text-slate-300 line-through' : 'text-slate-200'
+                              }`}
+                            >
+                              {action}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Footer info */}
       <div className="rounded-xl border border-slate-700/40 bg-slate-800/30 p-3 text-xs text-slate-400 leading-relaxed">

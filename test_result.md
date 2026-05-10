@@ -534,7 +534,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Centre Opérationnel - Onglet Endiguement"
+    - "Centre Opérationnel - Phases 2/3/4"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -548,24 +548,57 @@ frontend_v4:
     priority: "high"
     needs_retesting: false
     status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "Nouvelle page /dashboard/centre-operationnel ajoutée avec assistant de qualification cyber 5 étapes."
       - working: true
         agent: "user"
-        comment: "✅ Validation utilisateur — screenshot fourni montre la page fonctionnelle, Main courante alimentée avec 4 entrées auto (Démarrage qualification x2, Qualification terminée Incident majeur, Périmètre Compte administrateur)."
+        comment: "✅ Validé. Main courante alimentée correctement."
 
   - task: "Centre Opérationnel - Onglet Endiguement"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/apps/web/src/components/containment/ContainmentPanel.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "user"
+        comment: "✅ Phase 1 validée par l'utilisateur sur cyber-wizard.preview.emergentagent.com — 5 playbooks (ransomware, mail, defacement, ddos, system) avec actions cochables → auto-log Main Courante."
+
+  - task: "Centre Opérationnel - Onglet Obligations détaillées (Phase 2)"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/components/obligations/ObligationsPanel.tsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Nouvel onglet Endiguement ajouté au Centre Opérationnel. 5 playbooks JSON typés (containmentPlaybooks.ts) : ransomware, mail_account_compromise, website_defacement, ddos, system_compromise — issus des fiches CSIRT Grand Est / InterCERT-FR / ANSSI. UI : sélecteur d'incidents (cartes avec icône + sévérité) puis vue playbook (header gradient + barre de progression + groupes par priorité P1-P5 + actions cochables). Chaque case cochée logue automatiquement une entrée dans la Main Courante (auteur 'Endiguement', auto:true). Pas de persistance des cases (réinit à chaque visite). Partage de l'incident_type entre Qualification et Endiguement via state parent CentreOperationnelPage. Mapping mail_compromise ↔ mail_account_compromise et defacement ↔ website_defacement. Bouton 'Passer à l'endiguement' ajouté sur l'écran final de Qualification. Validation visuelle OK via screenshots locaux : sélecteur 5 incidents (CRITIQUE/ÉLEVÉE), vue playbook ransomware (en-tête rouge, 22 actions, P1 IMMÉDIAT, encadrés Impact possible orange). TypeScript clean."
+        comment: "Phase 2 livrée : nouvel onglet Obligations dynamique alimenté par les réponses du questionnaire Qualification. 5 obligations (Dépôt de plainte, CNIL 72h, Assurance cyber, ANSSI, Autorités sectorielles) avec trigger_conditions JSON. Calcul automatique des obligations actives via computeActiveConditions() à partir de l'incident_type + answers + severity. Affichage informatif avec actions, références légales (RGPD Art. 33/34, LPM/NIS2), liens externes (CNIL, service-public, ANSSI). Bouton 'Copier dans la main courante' pour chaque obligation. Section séparée pour les obligations non déclenchées. Disclaimer juridique."
+
+  - task: "Centre Opérationnel - DDoS + Compromission système (Phase 3)"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/data/incidentQualificationData.ts"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Phase 3 livrée : ajout de 2 incidents complets dans la Qualification. (1) Déni de service réseau (DDoS) — 5 questions spécifiques (active/cible/volume/protection/provider_contacted), résultRules cascadées, obligations plainte+ANSSI+assurance. (2) Compromission système — 6 questions spécifiques (rôle critique DC/serveur/poste, compte privilèges, mouvements latéraux, persistance, accès données sensibles, intégrité logs), résultRules avec niveau crise pour DC et lateral, obligations CNIL+plainte+assurance+ANSSI. Total : 5 incidents au lieu de 3."
+
+  - task: "Centre Opérationnel - Mode Victime / Mode Analyste (Phase 4)"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/store/centreOpStore.ts"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Phase 4 livrée : toggle global Mode Victime / Mode Analyste dans le header du Centre Opérationnel. Store Zustand sans persistance (centreOpStore). En mode Analyste, l'onglet Endiguement affiche un encadré purple supplémentaire 'Actions techniques avancées' avec analyst_actions par playbook (forensique RAM/disk/MFT, threat hunting, BloodHound, IOC analysis, M365 audit logs, WAF tuning, BGP FlowSpec, EDR sweep, etc.). Au moins 2 groupes d'actions par playbook, toutes cochables avec auto-log Main Courante (auteur 'Endiguement (Analyste)'). Toggle UI : 2 boutons User/Microscope dans le header en haut à droite, mutuellement exclusifs."
 
 backend_v4:
   - task: "V4 Modular Backend Refactoring"
