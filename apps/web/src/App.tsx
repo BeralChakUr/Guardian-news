@@ -10,6 +10,7 @@ import OutilsPage from './pages/OutilsPage'
 import UrgencePage from './pages/UrgencePage'
 import SourcesPage from './pages/SourcesPage'
 import SettingsPage from './pages/SettingsPage'
+import CentreOperationnelPage from './pages/CentreOperationnelPage'
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="attaques" element={<AttaquesPage />} />
           <Route path="outils" element={<OutilsPage />} />
           <Route path="urgence" element={<UrgencePage />} />
+          <Route path="centre-operationnel" element={<CentreOperationnelPage />} />
           <Route path="sources" element={<SourcesPage />} />
           <Route path="parametres" element={<SettingsPage />} />
         </Route>

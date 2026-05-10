@@ -5,6 +5,6 @@
     "expo": "./expo"
   },
   "dependencies": {
-    "expo": "54.0.33"
+    "expo": "~54.0.34"
   }
 }

@@ -534,10 +534,23 @@ metadata:
 
 test_plan:
   current_focus:
-    - "V4 Modular Backend Refactoring"
+    - "Centre Opérationnel - Qualification Wizard"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+
+frontend_v4:
+  - task: "Centre Opérationnel - Qualification Wizard"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/pages/CentreOperationnelPage.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Nouvelle page /dashboard/centre-operationnel ajoutée avec assistant de qualification cyber 5 étapes (Incident → Situation → Général → Spécifique → Résultat). 3 cas d'usage : Compromission messagerie / Rançongiciel / Défiguration. Composants : QualificationWizard, MainCourante. Store Zustand persisté localStorage 'guardian-main-courante'. Lien sidebar ajouté entre Urgence et Sources avec icône ClipboardCheck. Validation visuelle initiale OK via screenshot (rendu dark theme correct, 3 cartes incident, main courante latérale, stepper 5 étapes). Test interactif du flux complet (sélection incident, navigation Suivant, réponses aux questions, affichage du résultat avec niveau et obligations) à valider par testing agent."
 
 backend_v4:
   - task: "V4 Modular Backend Refactoring"
