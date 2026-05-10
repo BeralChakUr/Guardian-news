@@ -196,9 +196,13 @@ const STEPS = [
 
 interface QualificationWizardProps {
   onLogEvent?: (description: string, scope?: string) => void;
+  /** Notifie le parent à chaque sélection d'incident (id type Qualification) */
+  onIncidentSelected?: (incidentId: string) => void;
+  /** Notifie le parent quand la qualification est terminée (utile pour basculer vers Endiguement) */
+  onCompleted?: () => void;
 }
 
-export default function QualificationWizard({ onLogEvent }: QualificationWizardProps) {
+export default function QualificationWizard({ onLogEvent, onIncidentSelected, onCompleted }: QualificationWizardProps) {
   const [stepIdx, setStepIdx] = useState(0);
   const [incident, setIncident] = useState<IncidentType | null>(null);
   const [answers, setAnswers] = useState<Answers>({});
@@ -227,6 +231,7 @@ export default function QualificationWizard({ onLogEvent }: QualificationWizardP
   const goNext = () => {
     if (stepIdx === 0 && incident) {
       logAuto(`Démarrage qualification : ${incident.shortTitle}`);
+      onIncidentSelected?.(incident.id);
     }
     if (stepIdx === STEPS.length - 2 && incident && result) {
       logAuto(
@@ -528,8 +533,18 @@ export default function QualificationWizard({ onLogEvent }: QualificationWizardP
             {/* Actions */}
             <div className="flex flex-wrap gap-2 pt-2">
               <button
-                onClick={handleCopy}
+                onClick={() => {
+                  onCompleted?.();
+                }}
                 className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-900 transition-colors"
+                data-testid="goto-containment-btn"
+              >
+                <ArrowRight className="h-4 w-4" />
+                Passer à l'endiguement
+              </button>
+              <button
+                onClick={handleCopy}
+                className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/40 hover:border-cyan-400 px-4 py-2 text-sm font-medium text-cyan-200 transition-colors"
                 data-testid="copy-summary-btn"
               >
                 <Copy className="h-4 w-4" />

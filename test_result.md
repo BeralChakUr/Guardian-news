@@ -534,7 +534,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Centre Opérationnel - Qualification Wizard"
+    - "Centre Opérationnel - Onglet Endiguement"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -542,15 +542,30 @@ test_plan:
 frontend_v4:
   - task: "Centre Opérationnel - Qualification Wizard"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/apps/web/src/pages/CentreOperationnelPage.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Nouvelle page /dashboard/centre-operationnel ajoutée avec assistant de qualification cyber 5 étapes."
+      - working: true
+        agent: "user"
+        comment: "✅ Validation utilisateur — screenshot fourni montre la page fonctionnelle, Main courante alimentée avec 4 entrées auto (Démarrage qualification x2, Qualification terminée Incident majeur, Périmètre Compte administrateur)."
+
+  - task: "Centre Opérationnel - Onglet Endiguement"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/components/containment/ContainmentPanel.tsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Nouvelle page /dashboard/centre-operationnel ajoutée avec assistant de qualification cyber 5 étapes (Incident → Situation → Général → Spécifique → Résultat). 3 cas d'usage : Compromission messagerie / Rançongiciel / Défiguration. Composants : QualificationWizard, MainCourante. Store Zustand persisté localStorage 'guardian-main-courante'. Lien sidebar ajouté entre Urgence et Sources avec icône ClipboardCheck. Validation visuelle initiale OK via screenshot (rendu dark theme correct, 3 cartes incident, main courante latérale, stepper 5 étapes). Test interactif du flux complet (sélection incident, navigation Suivant, réponses aux questions, affichage du résultat avec niveau et obligations) à valider par testing agent."
+        comment: "Nouvel onglet Endiguement ajouté au Centre Opérationnel. 5 playbooks JSON typés (containmentPlaybooks.ts) : ransomware, mail_account_compromise, website_defacement, ddos, system_compromise — issus des fiches CSIRT Grand Est / InterCERT-FR / ANSSI. UI : sélecteur d'incidents (cartes avec icône + sévérité) puis vue playbook (header gradient + barre de progression + groupes par priorité P1-P5 + actions cochables). Chaque case cochée logue automatiquement une entrée dans la Main Courante (auteur 'Endiguement', auto:true). Pas de persistance des cases (réinit à chaque visite). Partage de l'incident_type entre Qualification et Endiguement via state parent CentreOperationnelPage. Mapping mail_compromise ↔ mail_account_compromise et defacement ↔ website_defacement. Bouton 'Passer à l'endiguement' ajouté sur l'écran final de Qualification. Validation visuelle OK via screenshots locaux : sélecteur 5 incidents (CRITIQUE/ÉLEVÉE), vue playbook ransomware (en-tête rouge, 22 actions, P1 IMMÉDIAT, encadrés Impact possible orange). TypeScript clean."
 
 backend_v4:
   - task: "V4 Modular Backend Refactoring"

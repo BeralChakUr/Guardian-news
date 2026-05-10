@@ -1,18 +1,23 @@
 import { useState } from 'react';
-import { Activity, ClipboardCheck, Lock } from 'lucide-react';
+import { Activity, ClipboardCheck, Lock, ShieldOff, Building2 } from 'lucide-react';
 import QualificationWizard from '../components/qualification/QualificationWizard';
 import MainCourante from '../components/qualification/MainCourante';
+import ContainmentPanel from '../components/containment/ContainmentPanel';
 
-type Tab = 'qualification' | 'analyste' | 'documents';
+type Tab = 'qualification' | 'endiguement' | 'obligations' | 'analyste' | 'documents';
 
 const TABS: { id: Tab; label: string; icon: typeof ClipboardCheck; locked?: boolean }[] = [
   { id: 'qualification', label: 'Qualification', icon: ClipboardCheck },
+  { id: 'endiguement', label: 'Endiguement', icon: ShieldOff },
+  { id: 'obligations', label: 'Obligations', icon: Building2, locked: true },
   { id: 'analyste', label: 'Analyste avancé', icon: Activity, locked: true },
   { id: 'documents', label: 'Documents', icon: Lock, locked: true },
 ];
 
 export default function CentreOperationnelPage() {
   const [tab, setTab] = useState<Tab>('qualification');
+  // Incident hérité de la Qualification (ID format Qualification : mail_compromise / ransomware / defacement)
+  const [qualifiedIncidentId, setQualifiedIncidentId] = useState<string | null>(null);
 
   return (
     <div className="space-y-5" data-testid="centre-operationnel">
@@ -24,16 +29,16 @@ export default function CentreOperationnelPage() {
               <Activity className="h-3 w-3" />
               Centre opérationnel
             </div>
-            <h1 className="text-2xl font-bold text-white">Assistant de qualification cyber</h1>
+            <h1 className="text-2xl font-bold text-white">Assistant de réponse incident cyber</h1>
             <p className="text-sm text-slate-300 mt-1 max-w-2xl">
-              Qualifiez rapidement un incident à partir des fiches CSIRT, obtenez le niveau estimé,
-              les premières actions et les obligations à activer.
+              Qualifiez l'incident, suivez le playbook d'endiguement adapté et tracez chaque action
+              dans la main courante.
             </p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="mt-5 flex gap-1 border-b border-slate-700" role="tablist">
+        <div className="mt-5 flex gap-1 border-b border-slate-700 overflow-x-auto scrollbar-none" role="tablist">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = t.id === tab;
@@ -44,7 +49,7 @@ export default function CentreOperationnelPage() {
                 aria-selected={active}
                 disabled={t.locked}
                 onClick={() => !t.locked && setTab(t.id)}
-                className={`relative inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                className={`relative inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
                   active
                     ? 'border-cyan-400 text-cyan-300'
                     : t.locked
@@ -69,7 +74,21 @@ export default function CentreOperationnelPage() {
       {tab === 'qualification' && (
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5 items-start">
           <div className="min-w-0">
-            <QualificationWizard />
+            <QualificationWizard
+              onIncidentSelected={(id) => setQualifiedIncidentId(id)}
+              onCompleted={() => setTab('endiguement')}
+            />
+          </div>
+          <div className="min-w-0">
+            <MainCourante />
+          </div>
+        </div>
+      )}
+
+      {tab === 'endiguement' && (
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5 items-start">
+          <div className="min-w-0">
+            <ContainmentPanel inheritedIncidentType={qualifiedIncidentId} />
           </div>
           <div className="min-w-0">
             <MainCourante />
