@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Tuple
 import requests
 
 # ---- Configuration ----
-PUBLIC_BASE = "https://guardian-v4.preview.emergentagent.com"
+PUBLIC_BASE = "https://cyber-wizard.preview.emergentagent.com"
 LOCAL_BASE = "http://localhost:8001"
 
 # Use public URL per standards. Fallback to local for non-/api endpoints.
