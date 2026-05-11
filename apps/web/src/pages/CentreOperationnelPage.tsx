@@ -34,7 +34,7 @@ export default function CentreOperationnelPage() {
           <div className="min-w-0 flex-1">
             <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/15 text-cyan-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider mb-2">
               <Activity className="h-3 w-3" />
-              Centre opérationnel
+              Centre Opérationnel
             </div>
             <h1 className="text-2xl font-bold text-white">Assistant de réponse incident cyber</h1>
             <p className="text-sm text-slate-300 mt-1 max-w-2xl">

@@ -28,7 +28,7 @@ const navItems = [
   { to: '/dashboard/attaques', icon: Swords, label: 'Attaques', description: 'Types d\'attaques' },
   { to: '/dashboard/outils', icon: Wrench, label: 'Outils', description: 'Boîte à outils' },
   { to: '/dashboard/urgence', icon: AlertTriangle, label: 'Urgence', description: 'Réponse incidents' },
-  { to: '/dashboard/centre-operationnel', icon: ClipboardCheck, label: 'Centre opérationnel', description: 'Qualification incident' },
+  { to: '/dashboard/centre-operationnel', icon: ClipboardCheck, label: 'Centre Opérationnel', description: 'Qualification incident' },
   { to: '/dashboard/sources', icon: Globe, label: 'Sources', description: 'Flux OSINT' },
   { to: '/dashboard/parametres', icon: Settings, label: 'Paramètres', description: 'Configuration' },
 ];

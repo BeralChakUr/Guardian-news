@@ -534,12 +534,49 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Centre Opérationnel - Phases 2/3/4"
+    - "Lot A — Unification sidebar + 404 prod + renommage"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 frontend_v4:
+  - task: "Lot A — Uniformisation sidebar (SimpleDashboard utilise AppShell)"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/pages/SimpleDashboard.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Cause racine corrigée : App.tsx avait deux routes /dashboard en conflit. SimpleDashboard avait son propre sidebar inline ('Cyber Intelligence', 8 items sans sous-titres) qui différait du AppShell global ('Plateforme Cyber V4.0', 9 items avec sous-titres + Niveau Cyber + Centre Opérationnel). Refactor : suppression complète du sidebar inline + <main> wrapper dans SimpleDashboard, App.tsx fusionne les deux routes en une seule sous AppShell avec <Route index element={<SimpleDashboard />} />. Résultat : un SEUL sidebar partout (vérifié visuellement /dashboard + /dashboard/centre-operationnel). Imports lucide nettoyés (Shield/Newspaper/Swords/Wrench/Settings/LayoutDashboard/Home/Radio/Building2 retirés du sidebar nav, Shield/Swords/Building2 réimportés pour usage dans les charts). Build prod OK (yarn build sans erreur)."
+
+  - task: "Lot A — Renommage 'Centre Opérationnel' (majuscule)"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/components/AppShell.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Renommage appliqué : 'Centre opérationnel' → 'Centre Opérationnel' dans AppShell.tsx (sidebar) + CentreOperationnelPage.tsx (badge header). Visible dans screenshot."
+
+  - task: "Lot A — 404 prod /dashboard/centre-operationnel"
+    implemented: true
+    working: "NA"
+    file: "/app/vercel.json"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Audit /app/vercel.json + /app/apps/web/vercel.json : les deux contiennent bien le rewrite SPA '/(.*)' → '/index.html'. La 404 prod observée par l'utilisateur est donc probablement due à un déploiement Vercel antérieur ne contenant pas la route centre-operationnel dans le bundle. Build de production effectué localement (yarn build) : OK, bundle contient bien 'centre-operationnel' (2 occurrences) et 'Centre Opérationnel' (2 occurrences). Un nouveau déploiement Vercel suffit pour résoudre la 404 prod."
+
+
   - task: "Centre Opérationnel - Qualification Wizard"
     implemented: true
     working: true

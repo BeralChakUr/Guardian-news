@@ -20,11 +20,9 @@ export default function App() {
         {/* Public Homepage */}
         <Route path="/" element={<HomePage />} />
         
-        {/* Simple Dashboard - Power BI Style */}
-        <Route path="/dashboard" element={<SimpleDashboard />} />
-        
-        {/* Dashboard with AppShell for other pages */}
+        {/* All Dashboard routes share the AppShell (sidebar + Niveau Cyber) */}
         <Route path="/dashboard" element={<AppShell />}>
+          <Route index element={<SimpleDashboard />} />
           <Route path="news" element={<ActusPage />} />
           <Route path="news/:id" element={<NewsDetailPage />} />
           <Route path="attaques" element={<AttaquesPage />} />

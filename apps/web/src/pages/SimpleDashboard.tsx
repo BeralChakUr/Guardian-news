@@ -2,24 +2,18 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Shield,
   AlertTriangle,
-  Radio,
   ChevronRight,
   ExternalLink,
   TrendingUp,
   Activity,
   Globe,
   Clock,
-  Newspaper,
-  Swords,
-  Wrench,
-  Settings,
-  LayoutDashboard,
   Zap,
   Bot,
-  Home,
   Building2,
+  Shield,
+  Swords,
 } from 'lucide-react';
 import { getNews, getTension, getDashboardSummary, getTopThreats } from '../services/newsService';
 import AIThreatSummaryReal from '../components/AIThreatSummaryReal';
@@ -29,17 +23,7 @@ import AttackTypeBarChart from '../components/AttackTypeBarChart';
 import CountryPieChart from '../components/CountryPieChart';
 import SourcesDistribution from '../components/SourcesDistribution';
 
-// Sidebar Navigation
-const navItems = [
-  { to: '/', icon: Home, label: 'Accueil' },
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord', active: true },
-  { to: '/dashboard/news', icon: Newspaper, label: 'Fil d\'actualités' },
-  { to: '/dashboard/attaques', icon: Swords, label: 'Attaques' },
-  { to: '/dashboard/outils', icon: Wrench, label: 'Outils' },
-  { to: '/dashboard/urgence', icon: AlertTriangle, label: 'Urgence' },
-  { to: '/dashboard/sources', icon: Globe, label: 'Sources' },
-  { to: '/dashboard/parametres', icon: Settings, label: 'Paramètres' },
-];
+// Removed sidebar nav (now provided by AppShell)
 
 // KPI Card Component
 function MetricCard({ 
@@ -157,74 +141,23 @@ export default function SimpleDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A1628] flex">
-      {/* ==================== SIDEBAR ==================== */}
-      <aside className="hidden lg:flex w-64 flex-col bg-[#0D1B2A] border-r border-gray-800">
-        {/* Logo - Clickable */}
-        <div className="p-6 border-b border-gray-800">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 group-hover:scale-105 transition-transform">
-              <Shield className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="font-bold text-white group-hover:text-cyan-400 transition-colors">Guardian News</h1>
-              <p className="text-xs text-gray-500">Cyber Intelligence</p>
-            </div>
-          </Link>
+    <div className="space-y-6">
+      {/* Page header */}
+      <header className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Tableau de bord</h1>
+          <p className="text-sm text-slate-400 mt-1">Vue d'ensemble cybersécurité en temps réel</p>
         </div>
+        <Link
+          to="/dashboard/news"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 text-slate-900 font-bold hover:bg-cyan-400 transition-colors"
+        >
+          Voir les Actualités
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+      </header>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4">
-          <ul className="space-y-2">
-            {navItems.map(({ to, icon: Icon, label, active }) => (
-              <li key={to}>
-                <Link
-                  to={to}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    active
-                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {/* Footer info */}
-        <div className="p-4 border-t border-gray-800">
-          <div className="flex items-center gap-2 mb-2">
-            <Radio className="h-3.5 w-3.5 text-green-400 animate-pulse" />
-            <p className="text-xs text-gray-400">Surveillance live</p>
-          </div>
-          <p className="text-2xl font-bold text-white">{summary?.kpis.active_sources ?? '—'}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Sources OSINT surveillées</p>
-        </div>
-      </aside>
-
-      {/* ==================== MAIN CONTENT ==================== */}
-      <main className="flex-1 overflow-auto">
-        {/* Header */}
-        <header className="sticky top-0 z-10 bg-[#0A1628]/95 backdrop-blur border-b border-gray-800 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-white">Tableau de Bord Cyber</h1>
-              <p className="text-sm text-gray-500">Vue d'ensemble cybersécurité en temps réel</p>
-            </div>
-            <Link
-              to="/dashboard/news"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 text-white font-medium hover:bg-cyan-400 transition-colors"
-            >
-              Voir les Actualités
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </header>
-
-        <div className="p-6 space-y-6">
+      <div className="space-y-6">
           {/* ==================== V4 KPI CARDS ==================== */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" data-testid="kpi-cards">
             <KpiCard
@@ -436,7 +369,7 @@ export default function SimpleDashboard() {
           {/* Footer Status */}
           <div className="flex items-center justify-between py-4 border-t border-gray-800">
             <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Radio className="h-4 w-4 text-green-400 animate-pulse" />
+              <Activity className="h-4 w-4 text-green-400 animate-pulse" />
               <span>Données en direct • Mis à jour à l'instant</span>
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -446,7 +379,6 @@ export default function SimpleDashboard() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
   );
 }
