@@ -21,15 +21,64 @@ export interface Question {
 
 export type SeverityLevel = 'anomalie' | 'mineur' | 'majeur' | 'crise';
 
+/** Condition élémentaire : la réponse à une question doit correspondre à une valeur */
+export interface RuleCondition {
+  questionId: string;
+  equals: string | string[];
+}
+
 export interface ResultRule {
-  /** Conditions : toutes doivent être vraies */
-  when: { questionId: string; equals: string | string[] }[];
+  /**
+   * Conditions cumulatives (legacy) — toutes doivent matcher.
+   * Conservé pour rétrocompatibilité, équivalent à allOf.
+   */
+  when?: RuleCondition[];
+  /** Toutes ces conditions doivent matcher (ET logique) */
+  allOf?: RuleCondition[];
+  /** Au moins une de ces conditions doit matcher (OU logique) */
+  anyOf?: RuleCondition[];
+  /** AUCUNE de ces conditions ne doit matcher (NON logique) */
+  not?: RuleCondition[];
   /** Niveau résultant si la règle matche */
   level: SeverityLevel;
   /** Raisons à afficher dans "Pourquoi ce niveau ?" */
   reasons: string[];
   /** Priorité (plus élevé = niveau plus grave gagne) */
   priority: number;
+  /** Identifiants d'obligations supplémentaires à déclencher (optionnel) */
+  triggerObligations?: string[];
+  /** Actions recommandées additionnelles (optionnel) */
+  recommendedActions?: string[];
+}
+
+/** Helper : évalue une condition unique contre un set de réponses */
+export function matchCondition(
+  cond: RuleCondition,
+  answers: Record<string, string | string[]>
+): boolean {
+  const val = answers[cond.questionId];
+  const expected = Array.isArray(cond.equals) ? cond.equals : [cond.equals];
+  if (Array.isArray(val)) return val.some((x) => expected.includes(String(x)));
+  return expected.includes(String(val ?? ''));
+}
+
+/** Helper : évalue une règle complète (allOf + anyOf + not + when) */
+export function evaluateRule(
+  rule: ResultRule,
+  answers: Record<string, string | string[]>
+): boolean {
+  // Legacy `when` traité comme allOf
+  const allConds = [...(rule.allOf ?? []), ...(rule.when ?? [])];
+  if (allConds.length > 0 && !allConds.every((c) => matchCondition(c, answers))) {
+    return false;
+  }
+  if (rule.anyOf && rule.anyOf.length > 0 && !rule.anyOf.some((c) => matchCondition(c, answers))) {
+    return false;
+  }
+  if (rule.not && rule.not.length > 0 && rule.not.some((c) => matchCondition(c, answers))) {
+    return false;
+  }
+  return true;
 }
 
 export interface Obligation {

@@ -152,6 +152,7 @@ export const OBLIGATIONS: Obligation[] = [
 // ─────────── Mapping réponses Qualification → trigger_conditions ───────────
 
 import type { IncidentType } from './incidentQualificationData';
+import { evaluateRule } from './incidentQualificationData';
 
 interface QualificationContext {
   /** ID de l'incident Qualification sélectionné (mail_compromise / ransomware / defacement / ddos / system_compromise) */
@@ -248,7 +249,7 @@ export function computeActiveConditions(ctx: QualificationContext): Set<string> 
 
 /**
  * Calcule la sévérité finale comme dans QualificationWizard.evaluate()
- * Évite la duplication de logique : ré-utilise les rules de l'incident.
+ * Utilise le nouveau moteur de règles (allOf / anyOf / not / when).
  */
 export function evaluateSeverityFromAnswers(
   incident: IncidentType,
@@ -264,13 +265,7 @@ export function evaluateSeverityFromAnswers(
   let bestPriority = -1;
 
   for (const rule of incident.resultRules) {
-    const allMatch = rule.when.every((c) => {
-      const val = answers[c.questionId];
-      const expected = Array.isArray(c.equals) ? c.equals : [c.equals];
-      if (Array.isArray(val)) return val.some((x) => expected.includes(String(x)));
-      return expected.includes(String(val ?? ''));
-    });
-    if (!allMatch) continue;
+    if (!evaluateRule(rule, answers)) continue;
     if (
       rule.priority > bestPriority ||
       (rule.priority === bestPriority &&

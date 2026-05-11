@@ -534,12 +534,97 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Lot A — Unification sidebar + 404 prod + renommage"
+    - "Lots B + C — Onglets Chronologie/Export/Assistance + Statuts + Moteur de règles"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 frontend_v4:
+  - task: "Lot B — Réorganisation en sections (Incidents / Assistance)"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/pages/CentreOperationnelPage.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Refactor de CentreOperationnelPage : 2 sections principales (⚠️ Incidents | 🛡 Assistance) puis sous-onglets sous Incidents (Qualification | Endiguement | Chronologie | Obligations | Export). État du tab par section."
+
+  - task: "Lot B — Onglet Chronologie dédié (vraie main courante)"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/components/chronologie/ChronologiePanel.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Nouveau composant ChronologiePanel avec vue tableau complète : colonnes Date·Heure / Auteur / Type (badge couleur) / Description / Contexte (machines/comptes) / Source (Auto/Manuel). Filtres par type d'événement (Qualification/Endiguement/Obligation/Export/Manuel/Système). Formulaire d'ajout manuel avec champs auteur/type/scope/description. Avertissement de sécurité 'Ne stockez pas cette main courante sur un système potentiellement compromis'. Suppression individuelle + bouton 'Vider'. Store mainCouranteStore étendu avec EntryType structuré + helper inferType pour rétrocompatibilité."
+
+  - task: "Lot B — Onglet Export (CSV / Markdown / Presse-papier)"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/components/chronologie/ExportPanel.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Nouvel onglet Export avec 3 modes : CSV (BOM UTF-8 pour Excel, escapement RFC 4180), Markdown (tableau formaté + entête + footer), Copier dans presse-papier (Markdown). Génère un fichier daté (.csv ou .md). Auto-log dans la main courante après chaque export (auteur 'Export', type 'export'). Encart 'astuce' pour rappeler d'exporter sur un support sain."
+
+  - task: "Lot B — Onglet Assistance (annuaire contacts)"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/components/assistance/AssistanceTab.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Annuaire opérationnel avec 10 contacts utiles : Cybermalveillance.gouv.fr (diagnostic 24/7), CERT-FR ANSSI (astreinte 24/7 avec téléphone+email), CSIRT régionaux/sectoriels, CNIL (notification 72h), Police/Gendarmerie (17, Info Escroqueries 0 805 805 817), Pré-plainte en ligne, THESEE, Assurance cyber, Prestataires PRIS qualifiés ANSSI, Info Escroqueries. Cartes color-coded avec liens cliquables (tel: et mailto:) + bouton Site officiel."
+
+  - task: "Lot C — Statuts dynamiques sur Obligations"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/components/obligations/ObligationsPanel.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Statuts cyclables sur chaque obligation : À vérifier (Circle slate) → En cours (Loader2 cyan animé) → Fait (Check emerald) → Non applicable (Ban slate). Clic sur le badge cycle au statut suivant + auto-log Main Courante. Section 'Pourquoi cette obligation est déclenchée' affichant les trigger_conditions matchées sous forme de chips. Conserve l'affichage informatif (actions, références légales, liens externes, bouton copie)."
+
+  - task: "Lot C — Refonte du moteur de règles (allOf / anyOf / not)"
+    implemented: true
+    working: "NA"
+    file: "/app/apps/web/src/data/incidentQualificationData.ts"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Moteur de règles étendu : ResultRule supporte maintenant allOf (ET cumulatif), anyOf (OU), not (négation), avec rétrocompatibilité via legacy `when` (traité comme allOf). Helpers exportés : matchCondition() + evaluateRule(). Ajout aux types Rule : triggerObligations[] et recommendedActions[] (pour usage futur). QualificationWizard.evaluate() et obligationsData.evaluateSeverityFromAnswers() utilisent désormais evaluateRule() au lieu de la boucle every-with. Toutes les règles existantes (5 incidents) restent compatibles via legacy when."
+
+  - task: "Lot B/C — Build production"
+    implemented: true
+    working: true
+    file: "/app/apps/web/dist"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Build prod (yarn build) OK : tsc clean + vite build sans erreur. Bundle 1.08 Mo (gzip 305 kB)."
+
+
   - task: "Lot A — Uniformisation sidebar (SimpleDashboard utilise AppShell)"
     implemented: true
     working: "NA"

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Building2,
   Clock,
@@ -9,6 +9,10 @@ import {
   Inbox,
   Scale,
   ShieldCheck,
+  Circle,
+  Loader2,
+  Check,
+  Ban,
 } from 'lucide-react';
 import {
   OBLIGATIONS,
@@ -20,6 +24,17 @@ import {
 } from '../../data/obligationsData';
 import { INCIDENTS } from '../../data/incidentQualificationData';
 import { useMainCouranteStore } from '../../store/mainCouranteStore';
+
+type ObligationStatus = 'pending' | 'in_progress' | 'done' | 'na';
+
+const STATUS_META: Record<ObligationStatus, { label: string; icon: typeof Circle; color: string; bg: string; border: string }> = {
+  pending: { label: 'À vérifier', icon: Circle, color: 'text-slate-300', bg: 'bg-slate-500/15', border: 'border-slate-500/40' },
+  in_progress: { label: 'En cours', icon: Loader2, color: 'text-cyan-300', bg: 'bg-cyan-500/15', border: 'border-cyan-500/40' },
+  done: { label: 'Fait', icon: Check, color: 'text-emerald-300', bg: 'bg-emerald-500/15', border: 'border-emerald-500/40' },
+  na: { label: 'Non applicable', icon: Ban, color: 'text-slate-500', bg: 'bg-slate-700/30', border: 'border-slate-700/40' },
+};
+
+const STATUS_CYCLE: ObligationStatus[] = ['pending', 'in_progress', 'done', 'na'];
 
 const CATEGORY_ICON: Record<string, typeof Building2> = {
   legal: Scale,
@@ -36,6 +51,21 @@ interface Props {
 
 export default function ObligationsPanel({ incidentId, answers }: Props) {
   const addEntry = useMainCouranteStore((s) => s.addEntry);
+  const [statuses, setStatuses] = useState<Record<string, ObligationStatus>>({});
+
+  const cycleStatus = (o: Obligation) => {
+    const current = statuses[o.id] ?? 'pending';
+    const idx = STATUS_CYCLE.indexOf(current);
+    const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+    setStatuses({ ...statuses, [o.id]: next });
+    addEntry({
+      author: 'Obligations',
+      type: 'obligation',
+      description: `Statut "${o.title}" → ${STATUS_META[next].label}`,
+      scope: CATEGORY_LABEL[o.category],
+      auto: true,
+    });
+  };
 
   const incident = useMemo(
     () => (incidentId ? INCIDENTS.find((i) => i.id === incidentId) : null),
@@ -151,6 +181,13 @@ export default function ObligationsPanel({ incidentId, answers }: Props) {
           {triggered.map((o) => {
             const sty = PRIORITY_STYLE[o.ui_priority];
             const Icon = CATEGORY_ICON[o.category] ?? Building2;
+            const status = statuses[o.id] ?? 'pending';
+            const stMeta = STATUS_META[status];
+            const StIcon = stMeta.icon;
+            // Conditions matchées pour expliciter le pourquoi
+            const matchedConditions = o.trigger_conditions.filter((c) =>
+              activeConditions.has(c)
+            );
             return (
               <div
                 key={o.id}
@@ -181,7 +218,36 @@ export default function ObligationsPanel({ incidentId, answers }: Props) {
                     <h3 className="text-base font-semibold text-white leading-snug">{o.title}</h3>
                     <p className="text-sm text-slate-300 mt-1 leading-relaxed">{o.description}</p>
                   </div>
+                  {/* Badge statut cliquable */}
+                  <button
+                    onClick={() => cycleStatus(o)}
+                    className={`inline-flex items-center gap-1.5 rounded-lg border ${stMeta.bg} ${stMeta.color} ${stMeta.border} px-2.5 py-1.5 text-xs font-bold hover:opacity-80 transition-opacity shrink-0`}
+                    title="Cliquer pour changer le statut"
+                    data-testid={`obligation-status-${o.id}`}
+                  >
+                    <StIcon className={`h-3.5 w-3.5 ${status === 'in_progress' ? 'animate-spin' : ''}`} />
+                    {stMeta.label}
+                  </button>
                 </div>
+
+                {/* Raison du déclenchement */}
+                {matchedConditions.length > 0 && (
+                  <div className="ml-12 mb-3 rounded-lg bg-slate-900/40 border border-slate-700/40 px-3 py-2">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                      Pourquoi cette obligation est déclenchée
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {matchedConditions.map((c) => (
+                        <span
+                          key={c}
+                          className="inline-flex items-center gap-1 rounded-md bg-cyan-500/15 text-cyan-200 border border-cyan-500/30 px-1.5 py-0.5 text-[10px] font-mono"
+                        >
+                          ✓ {c}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="ml-12">

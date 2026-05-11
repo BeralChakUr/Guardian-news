@@ -1,24 +1,44 @@
 import { useState } from 'react';
-import { Activity, ClipboardCheck, Lock, ShieldOff, Building2, User, Microscope } from 'lucide-react';
+import {
+  Activity,
+  ClipboardCheck,
+  ShieldOff,
+  Building2,
+  User,
+  Microscope,
+  AlertTriangle,
+  ClipboardList,
+  Download,
+  LifeBuoy,
+} from 'lucide-react';
 import QualificationWizard from '../components/qualification/QualificationWizard';
-import MainCourante from '../components/qualification/MainCourante';
 import ContainmentPanel from '../components/containment/ContainmentPanel';
 import ObligationsPanel from '../components/obligations/ObligationsPanel';
+import ChronologiePanel from '../components/chronologie/ChronologiePanel';
+import ExportPanel from '../components/chronologie/ExportPanel';
+import AssistanceTab from '../components/assistance/AssistanceTab';
 import { useCentreOpStore } from '../store/centreOpStore';
 
-type Tab = 'qualification' | 'endiguement' | 'obligations' | 'analyste' | 'documents';
+type Section = 'incidents' | 'assistance';
+type IncidentTab = 'qualification' | 'endiguement' | 'chronologie' | 'obligations' | 'export';
 
-const TABS: { id: Tab; label: string; icon: typeof ClipboardCheck; locked?: boolean }[] = [
+const SECTIONS: { id: Section; label: string; icon: typeof AlertTriangle; emoji: string }[] = [
+  { id: 'incidents', label: 'Incidents', icon: AlertTriangle, emoji: '⚠️' },
+  { id: 'assistance', label: 'Assistance', icon: LifeBuoy, emoji: '🛡' },
+];
+
+const INCIDENT_TABS: { id: IncidentTab; label: string; icon: typeof ClipboardCheck }[] = [
   { id: 'qualification', label: 'Qualification', icon: ClipboardCheck },
   { id: 'endiguement', label: 'Endiguement', icon: ShieldOff },
+  { id: 'chronologie', label: 'Chronologie', icon: ClipboardList },
   { id: 'obligations', label: 'Obligations', icon: Building2 },
-  { id: 'analyste', label: 'Analyste avancé', icon: Activity, locked: true },
-  { id: 'documents', label: 'Documents', icon: Lock, locked: true },
+  { id: 'export', label: 'Export', icon: Download },
 ];
 
 export default function CentreOperationnelPage() {
-  const [tab, setTab] = useState<Tab>('qualification');
-  // Incident hérité de la Qualification (ID format Qualification : mail_compromise / ransomware / defacement / ddos / system_compromise)
+  const [section, setSection] = useState<Section>('incidents');
+  const [tab, setTab] = useState<IncidentTab>('qualification');
+  // Incident hérité de la Qualification (mail_compromise / ransomware / defacement / ddos / system_compromise)
   const [qualifiedIncidentId, setQualifiedIncidentId] = useState<string | null>(null);
   // Réponses du questionnaire Qualification (utilisées par Obligations)
   const [qualifiedAnswers, setQualifiedAnswers] = useState<Record<string, string | string[]>>({});
@@ -38,8 +58,8 @@ export default function CentreOperationnelPage() {
             </div>
             <h1 className="text-2xl font-bold text-white">Assistant de réponse incident cyber</h1>
             <p className="text-sm text-slate-300 mt-1 max-w-2xl">
-              Qualifiez l'incident, suivez le playbook d'endiguement adapté, identifiez vos obligations
-              légales et tracez chaque action dans la main courante.
+              Qualifiez l'incident, suivez le playbook d'endiguement, tracez chaque action dans la
+              chronologie et identifiez vos obligations légales.
             </p>
           </div>
 
@@ -52,9 +72,7 @@ export default function CentreOperationnelPage() {
             <button
               onClick={() => setMode('victim')}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-                mode === 'victim'
-                  ? 'bg-cyan-500 text-slate-900'
-                  : 'text-slate-400 hover:text-white'
+                mode === 'victim' ? 'bg-cyan-500 text-slate-900' : 'text-slate-400 hover:text-white'
               }`}
               data-testid="mode-victim"
             >
@@ -64,9 +82,7 @@ export default function CentreOperationnelPage() {
             <button
               onClick={() => setMode('analyst')}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-                mode === 'analyst'
-                  ? 'bg-purple-500 text-white'
-                  : 'text-slate-400 hover:text-white'
+                mode === 'analyst' ? 'bg-purple-500 text-white' : 'text-slate-400 hover:text-white'
               }`}
               data-testid="mode-analyst"
             >
@@ -76,76 +92,81 @@ export default function CentreOperationnelPage() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="mt-5 flex gap-1 border-b border-slate-700 overflow-x-auto scrollbar-none" role="tablist">
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            const active = t.id === tab;
+        {/* Sections principales (Incidents / Assistance) */}
+        <div className="mt-5 flex gap-1.5 flex-wrap">
+          {SECTIONS.map((s) => {
+            const SIcon = s.icon;
+            const active = s.id === section;
             return (
               <button
-                key={t.id}
-                role="tab"
-                aria-selected={active}
-                disabled={t.locked}
-                onClick={() => !t.locked && setTab(t.id)}
-                className={`relative inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
+                key={s.id}
+                onClick={() => setSection(s.id)}
+                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm font-bold transition-colors ${
                   active
-                    ? 'border-cyan-400 text-cyan-300'
-                    : t.locked
-                    ? 'border-transparent text-slate-600 cursor-not-allowed'
-                    : 'border-transparent text-slate-400 hover:text-white'
+                    ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40'
+                    : 'bg-slate-900/40 text-slate-400 border-slate-700 hover:text-white'
                 }`}
-                data-testid={`tab-${t.id}`}
+                data-testid={`section-${s.id}`}
               >
-                <Icon className="h-4 w-4" />
-                {t.label}
-                {t.locked && (
-                  <span className="ml-1 rounded-full bg-slate-700 text-slate-400 px-1.5 py-0.5 text-[9px] uppercase tracking-wider">
-                    À venir
-                  </span>
-                )}
+                <span aria-hidden="true">{s.emoji}</span>
+                <SIcon className="h-4 w-4" />
+                {s.label}
               </button>
             );
           })}
         </div>
+
+        {/* Sous-onglets (uniquement pour Incidents) */}
+        {section === 'incidents' && (
+          <div className="mt-3 flex gap-1 border-b border-slate-700 overflow-x-auto scrollbar-none" role="tablist">
+            {INCIDENT_TABS.map((t) => {
+              const Icon = t.icon;
+              const active = t.id === tab;
+              return (
+                <button
+                  key={t.id}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setTab(t.id)}
+                  className={`relative inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
+                    active
+                      ? 'border-cyan-400 text-cyan-300'
+                      : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
+                  data-testid={`tab-${t.id}`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </header>
 
-      {tab === 'qualification' && (
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5 items-start">
-          <div className="min-w-0">
-            <QualificationWizard
-              onIncidentSelected={(id) => setQualifiedIncidentId(id)}
-              onAnswersChange={(a) => setQualifiedAnswers(a)}
-              onCompleted={() => setTab('endiguement')}
-            />
-          </div>
-          <div className="min-w-0">
-            <MainCourante />
-          </div>
-        </div>
+      {/* Section : Incidents */}
+      {section === 'incidents' && tab === 'qualification' && (
+        <QualificationWizard
+          onIncidentSelected={(id) => setQualifiedIncidentId(id)}
+          onAnswersChange={(a) => setQualifiedAnswers(a)}
+          onCompleted={() => setTab('endiguement')}
+        />
       )}
 
-      {tab === 'endiguement' && (
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5 items-start">
-          <div className="min-w-0">
-            <ContainmentPanel inheritedIncidentType={qualifiedIncidentId} />
-          </div>
-          <div className="min-w-0">
-            <MainCourante />
-          </div>
-        </div>
+      {section === 'incidents' && tab === 'endiguement' && (
+        <ContainmentPanel inheritedIncidentType={qualifiedIncidentId} />
       )}
 
-      {tab === 'obligations' && (
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5 items-start">
-          <div className="min-w-0">
-            <ObligationsPanel incidentId={qualifiedIncidentId} answers={qualifiedAnswers} />
-          </div>
-          <div className="min-w-0">
-            <MainCourante />
-          </div>
-        </div>
+      {section === 'incidents' && tab === 'chronologie' && <ChronologiePanel />}
+
+      {section === 'incidents' && tab === 'obligations' && (
+        <ObligationsPanel incidentId={qualifiedIncidentId} answers={qualifiedAnswers} />
       )}
+
+      {section === 'incidents' && tab === 'export' && <ExportPanel />}
+
+      {/* Section : Assistance */}
+      {section === 'assistance' && <AssistanceTab />}
     </div>
   );
 }

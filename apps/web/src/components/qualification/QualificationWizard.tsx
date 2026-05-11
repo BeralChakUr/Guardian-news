@@ -19,6 +19,7 @@ import {
 import {
   INCIDENTS,
   SEVERITY_META,
+  evaluateRule,
   type IncidentType,
   type Question,
   type SeverityLevel,
@@ -55,8 +56,8 @@ function evaluate(incident: IncidentType, answers: Answers) {
   let bestPriority = -1;
 
   for (const rule of incident.resultRules) {
-    const allMatch = rule.when.every((c) => matches(c, answers));
-    if (!allMatch) continue;
+    // Utilise le nouveau moteur allOf / anyOf / not (et legacy `when`)
+    if (!evaluateRule(rule, answers)) continue;
     if (
       rule.priority > bestPriority ||
       (rule.priority === bestPriority && SEVERITY_ORDER.indexOf(rule.level) > SEVERITY_ORDER.indexOf(level))
